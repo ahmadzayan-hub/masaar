@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --ink: 28 25 23;          /* warm near-black (stone-900) */
+  --ink-soft: 68 64 60;     /* stone-700 */
+  --gold: 176 138 79;       /* champagne — brand accent */
+  --gold-soft: 201 168 106;
+  --gold-deep: 138 106 56;
+  --accent: 225 29 108;     /* rose — sparing highlight */
+  --pearl: 250 247 243;     /* warm off-white */
+  --hairline: 231 226 219;  /* warm border */
+}
+
+html, body { height: 100%; }
+body {
+  @apply text-[color:rgb(var(--ink))] antialiased;
+  /* Soft, warm, layered background so surfaces read as premium paper. */
+  background-color: rgb(var(--pearl));
+  background-image:
+    radial-gradient(1200px 600px at 100% -10%, rgba(var(--gold), 0.08), transparent 60%),
+    radial-gradient(1000px 500px at -10% 0%, rgba(var(--accent), 0.05), transparent 55%);
+  background-attachment: fixed;
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* ---- Cards ---- */
+.card {
+  @apply rounded-2xl border bg-white p-4 shadow-card transition;
+  border-color: rgb(var(--hairline));
+}
+.card-hover { @apply hover:shadow-pop hover:-translate-y-0.5; }
+.card-tight { @apply rounded-xl border bg-white p-3 shadow-card; border-color: rgb(var(--hairline)); }
+.card-accent {
+  @apply rounded-2xl border p-4 shadow-card;
+  border-color: rgba(var(--gold), 0.35);
+  background: linear-gradient(180deg, rgba(var(--gold), 0.06), rgba(var(--gold), 0.02));
+}
+
+/* ---- Badges / pills ---- */
+.badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset;
+}
+.badge-pass { @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20; }
+.badge-warn { @apply bg-amber-50 text-amber-800 ring-amber-600/20; }
+.badge-fail { @apply bg-red-50 text-red-700 ring-red-600/20; }
+.badge-info { @apply bg-sky-50 text-sky-700 ring-sky-600/20; }
+.badge-neutral { @apply bg-stone-100 text-stone-600 ring-stone-500/15; }
+.badge-vip { @apply text-white ring-0 bg-gradient-to-r from-[color:rgb(var(--gold-deep))] to-[color:rgb(var(--gold))]; }
+.badge-hot { @apply bg-rose-50 text-rose-700 ring-rose-600/20; }
+.badge-warm { @apply bg-amber-50 text-amber-800 ring-amber-600/20; }
+.badge-cold { @apply bg-sky-50 text-sky-700 ring-sky-600/20; }
+.badge-gold { @apply bg-[color:rgba(var(--gold),0.12)] text-[color:rgb(var(--gold-deep))] ring-[color:rgba(var(--gold),0.30)]; }
+.badge-dot::before {
+  content: "";
+  @apply mr-1 inline-block h-1.5 w-1.5 rounded-full bg-current;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+  --tw-ring-color: rgba(var(--gold), 0.55);
+}
+.btn:active { @apply translate-y-px; }
+.btn-primary { @apply bg-[color:rgb(var(--ink))] text-white shadow-sm hover:bg-[color:rgb(var(--ink-soft))]; }
+.btn-accent { @apply text-white shadow-sm bg-gradient-to-r from-[color:rgb(var(--gold-deep))] to-[color:rgb(var(--gold))] hover:brightness-105; }
+.btn-ghost { @apply border bg-white/70 hover:bg-white; border-color: rgb(var(--hairline)); }
+.btn-soft { @apply bg-stone-100 text-stone-900 hover:bg-stone-200; }
+.btn-sm { @apply px-2.5 py-1 text-xs; }
+
+/* ---- Inputs ---- */
+.input {
+  @apply w-full rounded-lg border bg-white px-3 py-2 text-sm transition;
+  @apply focus:outline-none focus:ring-2;
+  border-color: rgb(var(--hairline));
+  --tw-ring-color: rgba(var(--gold), 0.35);
+}
+.input:focus { border-color: rgb(var(--gold-soft)); }
+.label { @apply block text-xs font-medium text-stone-500 mb-1; }
+
+/* ---- Section headers ---- */
+.h1 { @apply text-2xl font-semibold tracking-tight text-[color:rgb(var(--ink))]; }
+.h2 { @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-400; }
+.muted { @apply text-sm text-stone-500; }
+
+/* ---- Table polish ---- */
+.tbl { @apply w-full text-sm; }
+.tbl thead tr { @apply border-b text-left text-[11px] uppercase tracking-[0.12em] text-stone-400; border-color: rgb(var(--hairline)); }
+.tbl tbody tr { @apply border-b transition-colors hover:bg-[color:rgba(var(--gold),0.05)]; border-color: rgba(var(--hairline), 0.6); }
+.tbl th, .tbl td { @apply px-3 py-2.5 align-top; }
+
+/* ---- Kanban column ---- */
+.kanban { @apply flex min-w-[260px] flex-col gap-2 rounded-2xl border bg-white/60 p-3; border-color: rgb(var(--hairline)); }
+
+/* ---- RTL helper ---- */
+.rtl { direction: rtl; text-align: right; }
+.ltr { direction: ltr; }
+
+/* ---- Recharts axis tweak ---- */
+.recharts-text { fill: #78716c; font-size: 11px; }
+.recharts-cartesian-axis-tick-line { stroke: #e7e5e4; }
+.recharts-cartesian-grid-horizontal line { stroke: #f5f5f4; }
+
+/* ---- Thin, warm scrollbars ---- */
+* { scrollbar-width: thin; scrollbar-color: rgba(var(--ink), 0.18) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: rgba(var(--ink), 0.16); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(var(--ink), 0.28); background-clip: content-box; }

@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://wisal-app.vercel.app/sitemap.xml

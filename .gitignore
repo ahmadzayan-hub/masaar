@@ -1,13 +1,10 @@
 node_modules
-dist
-dist-ssr
-*.local
+.next
+out
 .env
 .env*.local
 *.log
 .DS_Store
-.next
-out
 .vercel
 coverage
 *.tsbuildinfo

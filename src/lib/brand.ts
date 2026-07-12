@@ -1,40 +1,24 @@
-/**
- * Central brand + seller-identity + compliance configuration.
- * Single source of truth so legal pages, footer and invoices stay consistent.
- * Values marked TODO should be confirmed against the live trade licence / TRN
- * before going to production (see UAE compliance report).
- */
-export const BRAND = {
-  name: "Lahza",
-  tagline: "Gifting & Event Platform",
+// Beyond Style UAE — brand voice & consumer-compliance constants (agent spec).
+// Centralizes the approved material wording and the mandatory care notice so
+// customer-facing copy stays within UAE Consumer Protection Law.
 
-  // ---- Seller identity (UAE E-Commerce Law disclosure) -------------------
-  legalName: "Beyond Connect General Trading L.L.C",
-  licenseAuthority: "Dubai Department of Economy & Tourism (DET)",
-  licenseNumber: "TODO-XXXXXX", // confirm & display before launch
-  trn: "TODO-15-DIGIT-TRN", // 15-digit VAT TRN
-  address: "Dubai, United Arab Emirates",
-  vatRate: 0.05, // 5% standard-rated
+// Products are described ONLY as fashion jewellery / accessories.
+export const PRODUCT_DESCRIPTOR_EN = "Fashion Jewellery";
+export const PRODUCT_DESCRIPTOR_AR = "إكسسوارات أزياء";
 
-  // ---- Contact -----------------------------------------------------------
-  email: "hello@lahza.ae",
-  supportEmail: "care@lahza.ae",
-  phone: "+971 4 000 0000",
-  whatsapp: "971500000000", // digits only, international format for wa.me
-  instagram: "lahzacoffee",
-
-  // ---- Data / privacy ----------------------------------------------------
-  photoRetentionDays: 30, // uploaded source images auto-deleted after this
-} as const;
-
-export const EMIRATES = [
-  { id: "dubai", en: "Dubai", ar: "دبي", sameDay: true },
-  { id: "abudhabi", en: "Abu Dhabi", ar: "أبوظبي", sameDay: false },
-  { id: "sharjah", en: "Sharjah", ar: "الشارقة", sameDay: false },
-  { id: "ajman", en: "Ajman", ar: "عجمان", sameDay: false },
-  { id: "rak", en: "Ras Al Khaimah", ar: "رأس الخيمة", sameDay: false },
-  { id: "fujairah", en: "Fujairah", ar: "الفجيرة", sameDay: false },
-  { id: "uaq", en: "Umm Al Quwain", ar: "أم القيوين", sameDay: false },
+// The only approved material descriptions (use exactly; never "real gold",
+// "waterproof", "lifetime colour", etc. without certified proof).
+export const APPROVED_MATERIALS = [
+  "316L Surgical Stainless Steel (PVD Vacuum Plated)",
+  "Solid 925 Sterling Silver",
 ] as const;
 
-export type EmirateId = (typeof EMIRATES)[number]["id"];
+// Mandatory care notice returned on any material query (bilingual).
+export const CARE_NOTICE_EN =
+  "Keep away from direct water, concentrated perfume, alcohol sanitizers, and high friction.";
+export const CARE_NOTICE_AR =
+  "يُحفظ بعيداً عن الماء المباشر، والعطور المركزة، والمعقمات الكحولية، والاحتكاك الشديد.";
+
+// Reassuring closing line every customer reply should end with (spec Tone).
+export const CLOSING_LINE_EN = "We're right here for you every step of the way 🤍";
+export const CLOSING_LINE_AR = "نحن دايماً بخدمتك خطوة بخطوة 🤍";
