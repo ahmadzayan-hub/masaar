@@ -19,7 +19,7 @@ export interface SendResult {
 // Provider chosen via WHATSAPP_PROVIDER: "meta" | "mock". Defaults to "mock"
 // unless a Meta token + phone-number id are present.
 
-function useMetaWhatsApp(): { token?: string; phoneId?: string; on: boolean } {
+function metaWhatsAppConfig(): { token?: string; phoneId?: string; on: boolean } {
   const provider = (env("WHATSAPP_PROVIDER") || "").toLowerCase();
   const token = env("WHATSAPP_TOKEN");
   const phoneId = env("WHATSAPP_PHONE_NUMBER_ID");
@@ -29,7 +29,7 @@ function useMetaWhatsApp(): { token?: string; phoneId?: string; on: boolean } {
 // Single place that talks to the Meta Graph API; both text and interactive
 // sends build a `message` object and hand it here.
 async function postToMeta(to: string, message: Record<string, unknown>): Promise<SendResult> {
-  const { token, phoneId } = useMetaWhatsApp();
+  const { token, phoneId } = metaWhatsAppConfig();
   if (!token || !phoneId) {
     return { channel: "whatsapp", ok: false, provider: "meta", to, error: "WHATSAPP_TOKEN / WHATSAPP_PHONE_NUMBER_ID not set" };
   }
@@ -50,7 +50,7 @@ async function postToMeta(to: string, message: Record<string, unknown>): Promise
 }
 
 export async function sendWhatsApp(to: string, text: string): Promise<SendResult> {
-  if (useMetaWhatsApp().on) {
+  if (metaWhatsAppConfig().on) {
     return postToMeta(to, { type: "text", text: { body: text } });
   }
   // Mock — log and succeed so the pipeline is observable without credentials.
@@ -66,7 +66,7 @@ export interface WaButton {
 }
 
 export async function sendWhatsAppButtons(to: string, bodyText: string, buttons: WaButton[]): Promise<SendResult> {
-  if (useMetaWhatsApp().on) {
+  if (metaWhatsAppConfig().on) {
     return postToMeta(to, {
       recipient_type: "individual",
       type: "interactive",
