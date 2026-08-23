@@ -1,5 +1,16 @@
 # Beyond Style UAE — Customer Conversion & Order Control Agent
 
+## Product Authority
+
+| | |
+|---|---|
+| **Primary User** | Beyond Style owner & operators |
+| **Job To Be Done** | Run every order from first message to after-sales, without chaos |
+| **System of Record** | Customer / order / payment / fulfilment lifecycle |
+| **System of Intelligence** | Analysis, guardrails, margin-aware offer suggestions |
+| **Explicit Non-Goals** | Product design (→ 66) · market/portfolio strategy (→ BSOS) · owning deterministic commerce rules (→ Commerce Policy Engine) · new dashboards before security + real workflow |
+
+
 A **human-approved sales operating console** for Beyond Style UAE
 (BEYOND CONNECT GENERAL TRADING L.L.C). This is **not** an auto-reply bot. It is
 a control tower for UAE social commerce: the agent **drafts** replies and order
