@@ -7,7 +7,7 @@ import type { AppRole } from "@/lib/orders/lifecycle";
 export async function getCurrentRole(): Promise<AppRole> {
   if (!hasSupabaseEnv()) return "owner"; // demo mode — full local walkthrough
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

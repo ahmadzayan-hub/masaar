@@ -10,9 +10,11 @@ import { OrderActions } from "@/components/orders/OrderActions";
 
 export const dynamic = "force-dynamic";
 
-export default async function Order360Page({ params }: { params: { id: string } }) {
+export default async function Order360Page({ params }: { params: Promise<{ id: string }> }) {
+  // Next 15: route params arrive as a promise.
+  const { id } = await params;
   const [{ order, customer, payments, delivery, events, status, demoMode }, role] =
-    await Promise.all([fetchOrder360(params.id), getCurrentRole()]);
+    await Promise.all([fetchOrder360(id), getCurrentRole()]);
 
   if (!order) {
     return (

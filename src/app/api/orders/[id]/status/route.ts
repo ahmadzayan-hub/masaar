@@ -14,7 +14,9 @@ import {
   eventForTransition,
 } from "@/lib/orders/lifecycle";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // Next 15: route params arrive as a promise.
+  const { id } = await params;
   let body: { to?: string; reason?: string };
   try {
     body = await req.json();
@@ -35,20 +37,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({
       ok: true,
       demo: true,
-      order_id: params.id,
+      order_id: id,
       to,
       event: eventForTransition(to as OrderStatus),
     });
   }
 
   const role = await getCurrentRole();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Pre-flight for a clearer error than the raw RPC exception.
   const { data: current } = await supabase
     .from("orders")
     .select("order_status")
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
   if (current?.order_status) {
     const from = current.order_status as OrderStatus;
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const { data, error } = await supabase.rpc("advance_order_status", {
-    p_order_id: params.id,
+    p_order_id: id,
     p_to: to,
     p_reason: body.reason ?? null,
     p_actor_type: "human",
