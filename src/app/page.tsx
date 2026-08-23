@@ -1,5 +1,7 @@
 import { fetchKpis, fetchRows, formatAed, formatRelative } from "@/lib/data";
 import { DemoBanner, Kpi, PageHeader, SectionTitle, OrderStatusPill, TempPill } from "@/components/ui";
+import { PipelineBoard } from "@/components/orders/PipelineBoard";
+import { stageCounts, todaySummary } from "@/lib/orders/pipeline";
 import {
   RevenueAreaChart, StackedStatusChart, FunnelBarChart, TopProductsChart, PlatformPie,
 } from "@/components/LazyCharts";
@@ -39,32 +41,40 @@ export default async function Dashboard() {
     conversations,
   });
 
+  const counts = stageCounts(orders);
+  const today = todaySummary(counts);
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
-        title="Beyond Style UAE — Control Tower"
-        subtitle="Live conversion, payment, delivery & margin. Demo data updates every reload."
+        title="Masaar — Mission Control"
+        subtitle="What is happening, what needs you, and what to do next — the pipeline is the product."
         action={
           <Link href="/intake" className="btn btn-accent">+ New Conversation</Link>
         }
       />
       <DemoBanner demoMode={demoMode} />
 
-      {/* Hero KPIs */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi label="Revenue today (AED)" value={formatAed(kpis.revenueAedToday)} hint="Confirmed paid orders only" />
-        <Kpi label="Revenue last 7 days" value={formatAed(kpis.revenueAed7d)} hint={`30d: ${formatAed(kpis.revenueAed30d)}`} />
-        <Kpi label="Awaiting payment" value={formatAed(kpis.pendingPaymentAed)} hint={`${kpis.paymentLinksSent} links sent`} />
-        <Kpi label="Open disputes" value={kpis.openDisputes} hint={kpis.openDisputes ? "Block dispatch until resolved" : "Clear"} />
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Kpi label="Hot leads" value={kpis.hotLeads} />
-        <Kpi label="New today" value={kpis.newToday} />
-        <Kpi label="Price inquiries" value={kpis.priceInquiries} />
-        <Kpi label="Delivered" value={kpis.deliveredOrders} />
-        <Kpi label="Lead → payment" value={`${kpis.leadToPayment}%`} />
-      </div>
+      {/* Layer 1 — NOW: the control room band */}
+      <section className="cr p-4 md:p-5" aria-label="Today">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-white/90">Today</h2>
+          <span className="cr-muted text-xs">
+            Revenue today <b className="text-white">{formatAed(kpis.revenueAedToday)}</b> · 7d {formatAed(kpis.revenueAed7d)}
+          </span>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          <Link href="/inbox" className="cr-stat"><div className="text-lg font-semibold tabular-nums">{kpis.newToday}</div><div className="cr-muted text-[11px]">New leads today</div></Link>
+          <Link href="/orders?stage=lead" className="cr-stat"><div className="text-lg font-semibold tabular-nums">{today.needConfirmation}</div><div className="cr-muted text-[11px]">Need confirmation</div></Link>
+          <Link href="/orders?stage=confirmed" className="cr-stat"><div className="text-lg font-semibold tabular-nums">{today.awaitingPayment}</div><div className="cr-muted text-[11px]">Awaiting payment</div></Link>
+          <Link href="/orders?stage=production" className="cr-stat"><div className="text-lg font-semibold tabular-nums">{today.inProduction}</div><div className="cr-muted text-[11px]">In production</div></Link>
+          <Link href="/orders?stage=dispatched" className="cr-stat"><div className="text-lg font-semibold tabular-nums">{today.withCourier}</div><div className="cr-muted text-[11px]">With courier</div></Link>
+          <Link href="/orders?stage=after_sales" className="cr-stat"><div className="text-lg font-semibold tabular-nums text-[#F7A6A6]">{today.problems + kpis.openDisputes}</div><div className="cr-muted text-[11px]">Problems</div></Link>
+        </div>
+        <div className="mt-4">
+          <PipelineBoard counts={counts} />
+        </div>
+      </section>
 
       {/* Revenue + Attention queue */}
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
@@ -138,7 +148,11 @@ export default async function Dashboard() {
             <tbody>
               {orders.slice(0, 7).map((o) => (
                 <tr key={o.id as string}>
-                  <td className="font-medium">{o.product_summary as string}</td>
+                  <td className="font-medium">
+                    <Link href={`/orders/${o.id as string}`} className="hover:underline">
+                      {o.product_summary as string}
+                    </Link>
+                  </td>
                   <td>{o.customer_name as string}</td>
                   <td>{formatAed(Number(o.total_amount))}</td>
                   <td><OrderStatusPill status={o.order_status as string} /></td>
