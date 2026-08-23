@@ -2,13 +2,21 @@ import { fetchRows, formatAed, formatRelative } from "@/lib/data";
 import { DemoBanner, PageHeader, OrderStatusPill, PaymentStatusPill, CourierStatusPill, SectionTitle, Kpi } from "@/components/ui";
 import Link from "next/link";
 import { ORDER_STATUSES, STATUS_LABELS, normalizeStatus } from "@/lib/orders/lifecycle";
+import { filterByStage } from "@/lib/orders/pipeline";
+import clsx from "clsx";
 
 export const dynamic = "force-dynamic";
 
 const STAGES = ORDER_STATUSES.map((key) => ({ key, label: STATUS_LABELS[key].en }));
 
-export default async function OrdersPage() {
-  const { rows, demoMode } = await fetchRows("orders", { order: "created_at" });
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams?: { stage?: string };
+}) {
+  const { rows: allRows, demoMode } = await fetchRows("orders", { order: "created_at" });
+  const activeStage = searchParams?.stage ? normalizeStatus(searchParams.stage) : undefined;
+  const rows = filterByStage(allRows, activeStage);
   const totals = rows.reduce(
     (acc: { totalAed: number; paidAed: number; pendingAed: number; delivered: number; qc: number }, o) => {
       acc.totalAed += Number(o.total_amount) || 0;
@@ -35,6 +43,32 @@ export default async function OrdersPage() {
       />
       <DemoBanner demoMode={demoMode} />
 
+      {/* Stage filter — mirrors the Mission Control pipeline */}
+      <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by stage">
+        <Link
+          href="/orders"
+          role="tab"
+          aria-selected={!activeStage}
+          className={clsx("badge", !activeStage ? "badge-gold" : "badge-neutral")}
+        >
+          All ({allRows.length})
+        </Link>
+        {STAGES.map((s) => {
+          const n = allRows.filter((o) => normalizeStatus(o.order_status as string) === s.key).length;
+          return (
+            <Link
+              key={s.key}
+              href={`/orders?stage=${s.key}`}
+              role="tab"
+              aria-selected={activeStage === s.key}
+              className={clsx("badge", activeStage === s.key ? "badge-gold" : "badge-neutral")}
+            >
+              {s.label} ({n})
+            </Link>
+          );
+        })}
+      </div>
+
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
         <Kpi label="Total order value" value={formatAed(totals.totalAed)} />
         <Kpi label="Paid" value={formatAed(totals.paidAed)} />
@@ -58,7 +92,7 @@ export default async function OrdersPage() {
               {(byStage[s.key] ?? []).slice(0, 8).map((o) => (
                 <article key={o.id as string} className="card-tight">
                   <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-                    <span className="truncate font-medium">{o.product_summary as string}</span>
+                    <Link href={`/orders/${o.id as string}`} className="truncate font-medium hover:underline">{o.product_summary as string}</Link>
                     <span className="shrink-0 text-gray-500">{formatAed(Number(o.total_amount))}</span>
                   </div>
                   <div className="mb-2 text-xs text-gray-500">{o.customer_name as string} · {o.delivery_area as string}</div>
@@ -97,7 +131,7 @@ export default async function OrdersPage() {
             <tbody>
               {rows.map((o) => (
                 <tr key={o.id as string}>
-                  <td className="font-medium">{o.product_summary as string}</td>
+                  <td className="font-medium"><Link href={`/orders/${o.id as string}`} className="hover:underline">{o.product_summary as string}</Link></td>
                   <td>{o.customer_name as string}</td>
                   <td>{(o.delivery_city as string)} <span className="text-xs text-gray-400">{o.delivery_area as string}</span></td>
                   <td>{formatAed(Number(o.total_amount))}</td>

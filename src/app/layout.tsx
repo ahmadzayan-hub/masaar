@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Nav from "@/components/Nav";
+import { CommandPalette } from "@/components/CommandPalette";
 import { fetchRows, fetchKpis } from "@/lib/data";
 import { listConfirmations } from "@/lib/confirm/store";
 
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" dir="ltr">
       <body>
+        <CommandPalette />
         <div className="flex min-h-screen">
           <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-[color:rgb(var(--hairline))] bg-white/70 backdrop-blur-xl md:block">
             <Nav badges={badges} />
