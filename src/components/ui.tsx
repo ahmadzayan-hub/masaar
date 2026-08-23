@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { normalizeStatus } from "@/lib/orders/lifecycle";
 
 export function PageHeader({
   title, subtitle, action,
@@ -55,9 +56,10 @@ const STAGE_LABEL: Record<string, string> = {
 };
 
 const ORDER_STATUS_BADGE: Record<string, string> = {
-  draft: "badge-neutral", awaiting_payment: "badge-warn", paid: "badge-info",
+  lead: "badge-neutral", qualified: "badge-neutral", confirmed: "badge-warn",
+  paid: "badge-info", design_approval: "badge-warn", production: "badge-info",
   qc: "badge-warn", dispatched: "badge-info", delivered: "badge-pass",
-  cancelled: "badge-neutral", complaint: "badge-fail",
+  after_sales: "badge-fail", cancelled: "badge-neutral",
 };
 
 const PAYMENT_STATUS_BADGE: Record<string, string> = {
@@ -81,7 +83,8 @@ export function TempPill({ temp }: { temp: string }) {
 }
 
 export function OrderStatusPill({ status }: { status: string }) {
-  return <span className={clsx("badge", ORDER_STATUS_BADGE[status] ?? "badge-neutral")}>{status.replace(/_/g, " ")}</span>;
+  const s = normalizeStatus(status);
+  return <span className={clsx("badge", ORDER_STATUS_BADGE[s] ?? "badge-neutral")}>{s.replace(/_/g, " ")}</span>;
 }
 export function PaymentStatusPill({ status }: { status: string }) {
   return <span className={clsx("badge", PAYMENT_STATUS_BADGE[status] ?? "badge-neutral")}>{status.replace(/_/g, " ")}</span>;

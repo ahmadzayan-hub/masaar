@@ -1,19 +1,11 @@
 import { fetchRows, formatAed, formatRelative } from "@/lib/data";
 import { DemoBanner, PageHeader, OrderStatusPill, PaymentStatusPill, CourierStatusPill, SectionTitle, Kpi } from "@/components/ui";
 import Link from "next/link";
+import { ORDER_STATUSES, STATUS_LABELS, normalizeStatus } from "@/lib/orders/lifecycle";
 
 export const dynamic = "force-dynamic";
 
-const STAGES = [
-  { key: "draft", label: "Draft" },
-  { key: "awaiting_payment", label: "Awaiting payment" },
-  { key: "paid", label: "Paid" },
-  { key: "qc", label: "Quality check" },
-  { key: "dispatched", label: "Dispatched" },
-  { key: "delivered", label: "Delivered" },
-  { key: "complaint", label: "Complaint" },
-  { key: "cancelled", label: "Cancelled" },
-] as const;
+const STAGES = ORDER_STATUSES.map((key) => ({ key, label: STATUS_LABELS[key].en }));
 
 export default async function OrdersPage() {
   const { rows, demoMode } = await fetchRows("orders", { order: "created_at" });
@@ -31,7 +23,7 @@ export default async function OrdersPage() {
   const byStage: Record<string, Array<Record<string, unknown>>> = {};
   for (const s of STAGES) byStage[s.key] = [];
   for (const o of rows) {
-    const k = (o.order_status as string) || "draft";
+    const k = normalizeStatus(o.order_status as string);
     (byStage[k] ?? (byStage[k] = [])).push(o);
   }
 

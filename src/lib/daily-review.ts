@@ -54,7 +54,7 @@ export function computeDailyMetrics(orders: Order[], conversations: Conv[]): Dai
     todayConversations: convsToday.length,
     todayHotLeads: convsToday.filter((c) => c.lead_temperature === "hot").length,
     todayLost: convsToday.filter((c) => c.stage === "lost_lead").length,
-    todayComplaints: today.filter((o) => o.order_status === "complaint").length,
+    todayComplaints: today.filter((o) => o.order_status === "after_sales").length,
     topProduct: topByKey<string>(paidToday, "product_name"),
     topEmirate: topByKey<string>(paidToday, "delivery_area"),
     avgOrderAed: avg,

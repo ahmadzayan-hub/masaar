@@ -291,17 +291,18 @@ function generateInventory(rng: () => number) {
 function generateOrders(rng: () => number, customers: Record<string, unknown>[]) {
   const out: Record<string, unknown>[] = [];
   const statusFlow = [
-    ["draft", "none", "none"],
-    ["awaiting_payment", "link_sent", "none"],
-    ["awaiting_payment", "needs_verification", "none"],
+    ["lead", "none", "none"],
+    ["qualified", "none", "none"],
+    ["confirmed", "link_sent", "none"],
+    ["confirmed", "needs_verification", "none"],
     ["paid", "confirmed", "none"],
-    ["paid", "confirmed", "awaiting_confirmation"],
-    ["qc", "confirmed", "confirmed"],
+    ["design_approval", "confirmed", "none"],
+    ["production", "confirmed", "none"],
+    ["qc", "confirmed", "awaiting_confirmation"],
     ["dispatched", "confirmed", "in_transit"],
     ["delivered", "confirmed", "delivered"],
     ["delivered", "confirmed", "delivered"],
-    ["delivered", "confirmed", "delivered"],
-    ["complaint", "confirmed", "delivered"],
+    ["after_sales", "confirmed", "delivered"],
     ["cancelled", "none", "none"],
   ] as const;
   for (let i = 0; i < 42; i++) {
@@ -342,9 +343,9 @@ function generateOrders(rng: () => number, customers: Record<string, unknown>[])
       actual_received_date: flow[2] === "delivered" ? new Date(Date.now() - Math.max(0, daysAgo - 1) * DAY).toISOString().slice(0, 10) : null,
       receiver_name: flow[2] === "delivered" ? cust.name_display : null,
       staff_number: "N/A",
-      locked_by_dispute: flow[0] === "complaint",
+      locked_by_dispute: flow[0] === "after_sales",
       qc: flow[0] === "qc" ? { passed: false, last_check: isoAt(daysAgo) } : null,
-      notes: flow[0] === "complaint" ? "Customer reported wrong colour received." : null,
+      notes: flow[0] === "after_sales" ? "Customer reported wrong colour received." : null,
       created_at: isoAt(daysAgo, 10 + Math.floor(rng() * 8), Math.floor(rng() * 60)),
     });
   }
@@ -425,7 +426,7 @@ function generateReviews(rng: () => number, customers: Record<string, unknown>[]
 
 function generateDisputes(rng: () => number, orders: Record<string, unknown>[]) {
   const reasons = ["damaged", "wrong_item", "delivery_delay", "material_claim", "courier_failure"] as const;
-  const candidates = orders.filter((o) => o.order_status === "complaint" || (o.order_status === "delivered" && rng() < 0.04));
+  const candidates = orders.filter((o) => o.order_status === "after_sales" || (o.order_status === "delivered" && rng() < 0.04));
   return candidates.slice(0, 6).map((o, i) => {
     const reason = reasons[i % reasons.length];
     const isOpen = i < 2;

@@ -69,7 +69,7 @@ export function stackedStatusByDay(orders: Order[], days = 14) {
     const k = dayKey(o.created_at);
     const cell = init.get(k);
     if (!cell) continue;
-    if (o.order_status === "complaint") cell.complaints += 1;
+    if (o.order_status === "after_sales") cell.complaints += 1;
     else if (o.payment_status === "confirmed") cell.paid += 1;
     else if (o.payment_status === "link_sent" || o.payment_status === "needs_verification") cell.pending += 1;
   }
