@@ -14,10 +14,12 @@ export const dynamic = "force-dynamic";
 
 const MAX_ATTEMPTS = Number(process.env.CONFIRMATION_MAX_ATTEMPTS || 3);
 
-export async function GET(req: NextRequest, { params }: { params: { token: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  // Next 15: route params arrive as a promise.
+  const { token } = await params;
   if (!authed(req)) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   try {
-    const rec = await getByToken(params.token);
+    const rec = await getByToken(token);
     if (!rec) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
     return NextResponse.json({
       ok: true,
@@ -32,7 +34,9 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
   }
 }
 
-export async function POST(req: NextRequest, { params }: { params: { token: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  // Next 15: route params arrive as a promise.
+  const { token } = await params;
   if (!authed(req)) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
   let body: { action?: string } = {};
@@ -47,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
   }
 
   try {
-    const rec = await getByToken(params.token);
+    const rec = await getByToken(token);
     if (!rec) return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
     if (rec.status !== "awaiting") {
       return NextResponse.json({ ok: false, error: `cannot resend — order is ${rec.status}` }, { status: 409 });

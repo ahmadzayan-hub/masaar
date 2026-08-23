@@ -81,7 +81,7 @@ export async function fetchOrder360(id: string): Promise<Order360> {
     };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const [orderRes, paymentsRes, deliveryRes, eventsRes] = await Promise.all([
     supabase.from("orders").select("*").eq("id", id).maybeSingle(),
     supabase.from("payments").select("*").eq("order_id", id).order("created_at"),

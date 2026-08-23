@@ -12,10 +12,12 @@ const STAGES = ORDER_STATUSES.map((key) => ({ key, label: STATUS_LABELS[key].en 
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams?: { stage?: string };
+  searchParams?: Promise<{ stage?: string }>;
 }) {
+  // Next 15: searchParams arrives as a promise.
   const { rows: allRows, demoMode } = await fetchRows("orders", { order: "created_at" });
-  const activeStage = searchParams?.stage ? normalizeStatus(searchParams.stage) : undefined;
+  const stageParam = (await searchParams)?.stage;
+  const activeStage = stageParam ? normalizeStatus(stageParam) : undefined;
   const rows = filterByStage(allRows, activeStage);
   const totals = rows.reduce(
     (acc: { totalAed: number; paidAed: number; pendingAed: number; delivered: number; qc: number }, o) => {
