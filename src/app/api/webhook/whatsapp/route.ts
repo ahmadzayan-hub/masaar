@@ -20,7 +20,7 @@ import {
 } from "@/lib/confirm/messages";
 import { getByToken, getLatestAwaitingByPhone, updateStatus, wasProcessed, markProcessed } from "@/lib/confirm/store";
 import { sendWhatsApp } from "@/lib/notify/provider";
-import { updateOrderStatus, statusForAction } from "@/lib/orders/sink";
+import { updateOrderStatus, statusForAction, promoteIntakeOrder, SinkOutcome } from "@/lib/orders/sink";
 
 export const runtime = "nodejs";
 
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     from: string;
     action: ConfirmAction | null;
     status: string;
-    persisted?: { supabase: string; sheets: string };
+    persisted?: { supabase: string; sheets: string; coreOrder?: string };
   }> = [];
 
   for (const msg of messages) {
@@ -113,6 +113,13 @@ export async function POST(req: NextRequest) {
     // Mirror the lifecycle to the durable order record + Google Sheet. A confirm
     // sets Order Status = "Confirmed - In Preparation" (released to fulfillment).
     const persisted = await updateOrderStatus(record.token, statusForAction(action));
+    // A confirmation becomes exactly one core order (idempotent in the database), so the
+    // payment, production and dispatch lifecycle has a record to act on.
+    let core: SinkOutcome | null = null;
+    if (action === "confirm" && persisted.supabase.persisted) {
+      core = await promoteIntakeOrder(record.token);
+      if (!core.ok) console.error("[whatsapp] core order not created:", core.error);
+    }
     await sendWhatsApp(record.phone, buildFollowUp(action, record.customerName));
     if (msg.messageId) await markProcessed(msg.messageId);
 
@@ -120,7 +127,11 @@ export async function POST(req: NextRequest) {
       from: msg.from,
       action,
       status: updated ? updated.status : "update failed",
-      persisted: { supabase: persisted.supabase.provider, sheets: persisted.sheets.provider },
+      persisted: {
+        supabase: persisted.supabase.provider,
+        sheets: persisted.sheets.provider,
+        ...(core ? { coreOrder: core.persisted ? `linked ${core.orderId}` : `not created: ${core.error ?? core.detail}` } : {}),
+      },
     });
     // action === "confirm" -> order released to preparation (status "confirmed").
    } catch (err) {

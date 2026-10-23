@@ -22,7 +22,7 @@ import { createConfirmation, newToken, usingMemory } from "@/lib/confirm/store";
 import { buildConfirmationRequest } from "@/lib/confirm/messages";
 import { recordIntakeOrder } from "@/lib/orders/sink";
 import { computeCashCollection } from "@/lib/pricing";
-import { checkWebhookSecret } from "@/lib/http/auth";
+import { requireWebhookSecret } from "@/lib/http/auth";
 
 // Parse a free-text AED amount (e.g. "AED 154", "154 درهم", "129.0") to a number.
 function parseAed(raw?: string): number | null {
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function handlePost(req: NextRequest) {
-  if (!checkWebhookSecret(req)) {
+  if (!requireWebhookSecret(req)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
