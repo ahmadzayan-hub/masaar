@@ -170,6 +170,27 @@ export async function promoteIntakeOrder(token: string): Promise<SinkOutcome> {
   const db = getAdminClient();
   if (!db) return notPersisted("core order");
   const { data, error } = await db.rpc("promote_intake_order", { p_token: token });
-  if (error) return { ok: false, provider: "supabase", persisted: false, error: error.message };
+  if (error || !data) return { ok: false, provider: "supabase", persisted: false, error: "Core order was not returned" };
   return { ok: true, provider: "supabase", persisted: true, orderId: String(data), detail: "core order linked" };
+}
+
+// Atomic database transition. A mock is never a successful customer confirmation.
+export async function applyConfirmationReply(
+  token: string, eventId: string, action: "confirm" | "edit" | "decline",
+  phone: string, reply: Record<string, unknown>
+): Promise<SinkOutcome> {
+  const db = getAdminClient();
+  if (!db) return { ...notPersisted("confirmation reply"), ok: false };
+  const { data, error } = await db.rpc("apply_confirmation_reply", {
+    p_token: token, p_event_id: eventId, p_action: action, p_phone: phone, p_reply: reply,
+  });
+  if (error || !data || (action === "confirm" && !data.order_id)) {
+    return { ok: false, provider: "supabase", persisted: false, error: "Atomic confirmation did not complete" };
+  }
+  return { ok: true, provider: "supabase", persisted: true, orderId: data.order_id ?? undefined };
+}
+
+// Sheets is a mirror only. Never mirror a fulfillment status before the DB commit.
+export async function mirrorOrderStatus(token: string, action: "confirm" | "edit" | "decline"): Promise<SheetResult> {
+  return updateStatusByToken(token, statusForAction(action));
 }

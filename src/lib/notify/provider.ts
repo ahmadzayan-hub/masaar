@@ -53,9 +53,9 @@ export async function sendWhatsApp(to: string, text: string): Promise<SendResult
   if (metaWhatsAppConfig().on) {
     return postToMeta(to, { type: "text", text: { body: text } });
   }
-  // Mock — log and succeed so the pipeline is observable without credentials.
-  console.log(`[notify:mock:whatsapp] -> ${to}\n${text}\n`);
-  return { channel: "whatsapp", ok: true, provider: "mock", to, detail: "logged (configure WHATSAPP_PROVIDER=meta to send live)" };
+  // Mock is observable locally but is never successful delivery.
+  console.log("[notify:mock:whatsapp] not sent");
+  return { channel: "whatsapp", ok: false, provider: "mock", to, detail: "logged (configure WHATSAPP_PROVIDER=meta to send live)" };
 }
 
 // Interactive reply buttons (max 3, WhatsApp limit). Each button carries an `id`
@@ -79,9 +79,8 @@ export async function sendWhatsAppButtons(to: string, bodyText: string, buttons:
       },
     });
   }
-  const btns = buttons.map((b) => `[${b.title}]`).join(" ");
-  console.log(`[notify:mock:whatsapp:buttons] -> ${to}\n${bodyText}\n${btns}\n`);
-  return { channel: "whatsapp", ok: true, provider: "mock", to, detail: `logged buttons: ${buttons.map((b) => b.id).join(",")}` };
+  console.log("[notify:mock:whatsapp:buttons] not sent");
+  return { channel: "whatsapp", ok: false, provider: "mock", to, detail: `logged buttons: ${buttons.map((b) => b.id).join(",")}` };
 }
 
 // ---- Email (Resend) ----------------------------------------------------------
@@ -114,6 +113,6 @@ export async function sendEmail(to: string, subject: string, html: string, text:
     }
   }
 
-  console.log(`[notify:mock:email] -> ${to} | ${subject}\n${text}\n`);
-  return { channel: "email", ok: true, provider: "mock", to, detail: "logged (configure EMAIL_PROVIDER=resend to send live)" };
+  console.log("[notify:mock:email] not sent");
+  return { channel: "email", ok: false, provider: "mock", to, detail: "logged (configure EMAIL_PROVIDER=resend to send live)" };
 }

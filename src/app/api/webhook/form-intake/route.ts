@@ -140,7 +140,7 @@ async function handlePost(req: NextRequest) {
     totalAed: cash?.total ?? null,
     needsMapPin: validation.needsMapPin,
   });
-  const whatsapp = await sendWhatsAppButtons(validation.normalized.whatsappNumber, body, buttons);
+
 
   // Persist the validated lead to BOTH destinations: Supabase intake_orders
   // (durable source of truth) and the Google Sheet ("add lead to Sheet").
@@ -165,6 +165,12 @@ async function handlePost(req: NextRequest) {
     orderStatus: "Awaiting Customer Confirmation",
   });
 
+  // Do not invite confirmation of an intake that was never durably stored.
+  if (!persisted.supabase.ok || !persisted.supabase.persisted) {
+    return NextResponse.json({ ok: false, error: "Intake was not durably stored", persisted }, { status: 503 });
+  }
+  const whatsapp = await sendWhatsAppButtons(validation.normalized.whatsappNumber, body, buttons);
+
   const leadRow = {
     Timestamp: new Date().toISOString(),
     "Order ID": orderId || "",
@@ -188,7 +194,7 @@ async function handlePost(req: NextRequest) {
 
   return NextResponse.json(
     {
-      ok: true,
+      ok: whatsapp.ok && whatsapp.provider !== "mock",
       validation: { valid: true, issues: validation.issues },
       orderStatus: "Awaiting Customer Confirmation",
       confirmation: { token, channel: "whatsapp", status: "awaiting" },
@@ -197,7 +203,7 @@ async function handlePost(req: NextRequest) {
       notifications: [whatsapp],
       ...(usingMemory() ? { warning: "Confirmation stored in memory (no Supabase) — configure SUPABASE for durable state." } : {}),
     },
-    { status: 200 }
+    { status: whatsapp.ok && whatsapp.provider !== "mock" ? 200 : 503 }
   );
 }
 
