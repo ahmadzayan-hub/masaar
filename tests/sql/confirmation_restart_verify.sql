@@ -11,3 +11,11 @@ do $$ declare old_id uuid; result jsonb; begin
 end $$;
 rollback;
 \echo confirmation_restart: all checks passed
+begin;
+set local test.role = 'service_role';
+do $$ declare r jsonb; begin
+  r := ingest_form_submission('FORM-RESTART', '{"fixture":"synthetic"}'::jsonb, 'TOK-MUST-NOT-EXIST', '{}'::jsonb);
+  if r->>'token' <> 'TOK-FORM-RESTART' or r->>'created' <> 'false' then raise exception 'FAIL: form restart replay'; end if;
+  if exists(select 1 from order_confirmations where token = 'TOK-MUST-NOT-EXIST') then raise exception 'FAIL: form replay inserted'; end if;
+end $$;
+rollback;
