@@ -45,10 +45,10 @@ export function parseInbound(body: any): InboundMessage[] {
 // Verify Meta's X-Hub-Signature-256 header (sha256=...) against the raw body.
 // When WHATSAPP_APP_SECRET is unset the request is refused unless MASAAR_ALLOW_UNSIGNED_WEBHOOKS=1
 // outside production (local development only).
-export function verifySignature(rawBody: string, signatureHeader: string | null): boolean {
+export function verifySignature(rawBody: string | Uint8Array, signatureHeader: string | null): boolean {
   const secret = process.env.WHATSAPP_APP_SECRET;
   // Fail closed: an unsigned request is accepted only when unsigned webhooks were explicitly
-  // allowed for local development (never on a Vercel production deployment).
+  // allowed for local development (never in Node or Vercel production).
   if (!secret) return unsignedWebhooksAllowed();
   if (!signatureHeader) return false;
   const expected = "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");

@@ -46,14 +46,15 @@ export function GET(req: NextRequest) {
 
 // ---- POST: inbound messages ----
 export async function POST(req: NextRequest) {
-  const rawBody = await req.text();
+  // Authenticate the original bytes before any UTF-8/BOM normalization.
+  const rawBody = Buffer.from(await req.arrayBuffer());
   if (!verifySignature(rawBody, req.headers.get("x-hub-signature-256"))) {
     return NextResponse.json({ ok: false, error: "bad signature" }, { status: 401 });
   }
 
   let body: any;
   try {
-    body = JSON.parse(rawBody || "{}");
+    body = JSON.parse(rawBody.length ? new TextDecoder("utf-8", { fatal: true }).decode(rawBody) : "{}");
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
