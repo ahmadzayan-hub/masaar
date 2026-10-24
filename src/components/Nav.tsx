@@ -100,7 +100,7 @@ function NavList({ pathname, onNav, badges }: { pathname: string; onNav?: () => 
                     "group relative flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 transition-colors",
                     active
                       ? "bg-[color:rgb(var(--ink))] text-white shadow-sm"
-                      : "text-stone-600 hover:bg-[color:rgba(var(--gold),0.10)] hover:text-[color:rgb(var(--ink))]"
+                      : "text-stone-600 hover:bg-[color:rgb(var(--gold)_/_0.10)] hover:text-[color:rgb(var(--ink))]"
                   )}
                 >
                   {active && (
@@ -114,7 +114,7 @@ function NavList({ pathname, onNav, badges }: { pathname: string; onNav?: () => 
                     <span
                       className={clsx(
                         "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-                        active ? "bg-white/20 text-white" : "bg-[color:rgba(var(--gold),0.14)] text-[color:rgb(var(--gold-deep))]"
+                        active ? "bg-white/20 text-white" : "bg-[color:rgb(var(--gold)_/_0.14)] text-[color:rgb(var(--gold-deep))]"
                       )}
                       aria-label={`${count} items`}
                     >

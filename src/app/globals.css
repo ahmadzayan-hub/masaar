@@ -20,8 +20,8 @@ body {
   /* Soft, warm, layered background so surfaces read as premium paper. */
   background-color: rgb(var(--pearl));
   background-image:
-    radial-gradient(1200px 600px at 100% -10%, rgba(var(--gold), 0.08), transparent 60%),
-    radial-gradient(1000px 500px at -10% 0%, rgba(var(--accent), 0.05), transparent 55%);
+    radial-gradient(1200px 600px at 100% -10%, rgb(var(--gold) / 0.08), transparent 60%),
+    radial-gradient(1000px 500px at -10% 0%, rgb(var(--accent) / 0.05), transparent 55%);
   background-attachment: fixed;
   font-feature-settings: "ss01", "cv11";
 }
@@ -35,13 +35,13 @@ body {
 .card-tight { @apply rounded-xl border bg-white p-3 shadow-card; border-color: rgb(var(--hairline)); }
 .card-accent {
   @apply rounded-2xl border p-4 shadow-card;
-  border-color: rgba(var(--gold), 0.35);
-  background: linear-gradient(180deg, rgba(var(--gold), 0.06), rgba(var(--gold), 0.02));
+  border-color: rgb(var(--gold) / 0.35);
+  background: linear-gradient(180deg, rgb(var(--gold) / 0.06), rgb(var(--gold) / 0.02));
 }
 
 /* ---- Badges / pills ---- */
 .badge {
-  @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset;
+  @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset;
 }
 .badge-pass { @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20; }
 .badge-warn { @apply bg-amber-50 text-amber-800 ring-amber-600/20; }
@@ -52,7 +52,7 @@ body {
 .badge-hot { @apply bg-rose-50 text-rose-700 ring-rose-600/20; }
 .badge-warm { @apply bg-amber-50 text-amber-800 ring-amber-600/20; }
 .badge-cold { @apply bg-sky-50 text-sky-700 ring-sky-600/20; }
-.badge-gold { @apply bg-[color:rgba(var(--gold),0.12)] text-[color:rgb(var(--gold-deep))] ring-[color:rgba(var(--gold),0.30)]; }
+.badge-gold { @apply bg-[color:rgb(var(--gold)_/_0.12)] text-[color:rgb(var(--gold-deep))] ring-[color:rgb(var(--gold)_/_0.30)]; }
 .badge-dot::before {
   content: "";
   @apply mr-1 inline-block h-1.5 w-1.5 rounded-full bg-current;
@@ -62,7 +62,7 @@ body {
 .btn {
   @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition;
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
-  --tw-ring-color: rgba(var(--gold), 0.55);
+  --tw-ring-color: rgb(var(--gold) / 0.55);
 }
 .btn:active { @apply translate-y-px; }
 .btn-primary { @apply bg-[color:rgb(var(--ink))] text-white shadow-sm hover:bg-[color:rgb(var(--ink-soft))]; }
@@ -76,7 +76,7 @@ body {
   @apply w-full rounded-lg border bg-white px-3 py-2 text-sm transition;
   @apply focus:outline-none focus:ring-2;
   border-color: rgb(var(--hairline));
-  --tw-ring-color: rgba(var(--gold), 0.35);
+  --tw-ring-color: rgb(var(--gold) / 0.35);
 }
 .input:focus { border-color: rgb(var(--gold-soft)); }
 .label { @apply block text-xs font-medium text-stone-500 mb-1; }
@@ -89,7 +89,7 @@ body {
 /* ---- Table polish ---- */
 .tbl { @apply w-full text-sm; }
 .tbl thead tr { @apply border-b text-left text-[11px] uppercase tracking-[0.12em] text-stone-400; border-color: rgb(var(--hairline)); }
-.tbl tbody tr { @apply border-b transition-colors hover:bg-[color:rgba(var(--gold),0.05)]; border-color: rgba(var(--hairline), 0.6); }
+.tbl tbody tr { @apply border-b transition-colors hover:bg-[color:rgb(var(--gold)_/_0.05)]; border-color: rgb(var(--hairline) / 0.6); }
 .tbl th, .tbl td { @apply px-3 py-2.5 align-top; }
 
 /* ---- Kanban column ---- */
@@ -105,10 +105,10 @@ body {
 .recharts-cartesian-grid-horizontal line { stroke: #f5f5f4; }
 
 /* ---- Thin, warm scrollbars ---- */
-* { scrollbar-width: thin; scrollbar-color: rgba(var(--ink), 0.18) transparent; }
+* { scrollbar-width: thin; scrollbar-color: rgb(var(--ink) / 0.18) transparent; }
 *::-webkit-scrollbar { width: 9px; height: 9px; }
-*::-webkit-scrollbar-thumb { background: rgba(var(--ink), 0.16); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
-*::-webkit-scrollbar-thumb:hover { background: rgba(var(--ink), 0.28); background-clip: content-box; }
+*::-webkit-scrollbar-thumb { background: rgb(var(--ink) / 0.16); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgb(var(--ink) / 0.28); background-clip: content-box; }
 
 /* ---- Mission Control (signature surface: midnight + cyan/emerald) ---- */
 :root {
@@ -120,25 +120,25 @@ body {
 .cr {
   border-radius: 1.25rem;
   background:
-    radial-gradient(900px 300px at 85% -20%, rgba(var(--cyan), 0.10), transparent 60%),
-    radial-gradient(700px 260px at 0% 110%, rgba(var(--emerald), 0.08), transparent 55%),
+    radial-gradient(900px 300px at 85% -20%, rgb(var(--cyan) / 0.10), transparent 60%),
+    radial-gradient(700px 260px at 0% 110%, rgb(var(--emerald) / 0.08), transparent 55%),
     rgb(var(--midnight));
   color: #E8EDF5;
-  border: 1px solid rgba(var(--cyan), 0.14);
+  border: 1px solid rgb(var(--cyan) / 0.14);
 }
 .cr-muted { color: #93A1B7; }
 .cr-stat {
   @apply rounded-xl px-3 py-2.5;
-  background: rgba(var(--midnight-2), 0.85);
+  background: rgb(var(--midnight-2) / 0.85);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
-.cr-stat:hover { border-color: rgba(var(--cyan), 0.35); }
+.cr-stat:hover { border-color: rgb(var(--cyan) / 0.35); }
 .cr-stage {
   @apply flex min-w-[86px] flex-col items-center gap-1 rounded-xl px-2 py-2 text-center transition;
-  background: rgba(var(--midnight-2), 0.7);
+  background: rgb(var(--midnight-2) / 0.7);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
-.cr-stage:hover, .cr-stage:focus-visible { border-color: rgba(var(--cyan), 0.45); outline: none; }
+.cr-stage:hover, .cr-stage:focus-visible { border-color: rgb(var(--cyan) / 0.45); outline: none; }
 .cr-stage-count {
   @apply text-lg font-semibold tabular-nums;
   color: rgb(var(--cyan));
