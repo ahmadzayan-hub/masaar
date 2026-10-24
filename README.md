@@ -67,9 +67,10 @@ In the Supabase SQL editor (or via the CLI), run in order:
 | `SUPABASE_SERVICE_ROLE_KEY` | server-side privileged writes |
 | `AI_PROVIDER` | `openai` \| `anthropic` \| `gemini` \| `mock` |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | provider keys |
-| `WEBHOOK_SECRET` | optional shared secret for `/api/webhook/form-intake` |
+| `WEBHOOK_SECRET` | **required** shared secret for `/api/webhook/form-intake`; unset means every intake is refused (401) |
+| `MASAAR_ALLOW_UNSIGNED_WEBHOOKS` | `1` accepts unsigned webhooks for local development only; ignored on a Vercel production deployment |
 | `WHATSAPP_PROVIDER` + `WHATSAPP_TOKEN` / `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp send (`meta` \| `mock`) |
-| `WHATSAPP_VERIFY_TOKEN` / `WHATSAPP_APP_SECRET` | inbound `/api/webhook/whatsapp` verification + signature |
+| `WHATSAPP_VERIFY_TOKEN` / `WHATSAPP_APP_SECRET` | inbound `/api/webhook/whatsapp` verification + signature; without `WHATSAPP_APP_SECRET` every inbound POST is refused |
 | `EMAIL_PROVIDER` + `RESEND_API_KEY` / `EMAIL_FROM` | email thank-you (`resend` \| `mock`) |
 
 ## Form intake + WhatsApp confirmation gate
@@ -86,7 +87,7 @@ properties and add an "On form submit" trigger.
 
 **`POST /api/webhook/form-intake`** — on each submission:
 
-1. (optional) checks `WEBHOOK_SECRET` via the `x-webhook-secret` header;
+1. requires `WEBHOOK_SECRET` via the `x-webhook-secret` header (fails closed when unset);
 2. validates the details (`src/lib/intake/validate.ts`): UAE mobile normalized to
    `+9715XXXXXXXX`, recognized emirate, address with landmark detail;
 3. **valid** → opens an `order_confirmations` record (status `awaiting`),

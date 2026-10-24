@@ -18,11 +18,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSubmission, FormSubmission } from "@/lib/intake/validate";
 import { buildThankYou } from "@/lib/notify/templates";
 import { sendWhatsApp, sendWhatsAppButtons, sendEmail } from "@/lib/notify/provider";
-import { createConfirmation, newToken, usingMemory } from "@/lib/confirm/store";
+import { newToken } from "@/lib/confirm/store";
 import { buildConfirmationRequest } from "@/lib/confirm/messages";
-import { recordIntakeOrder } from "@/lib/orders/sink";
+import { IntakeOrder } from "@/lib/orders/sink";
+import { ingestSubmission, markSubmissionNotified, mirrorNewSubmission, IntakeConflict } from "@/lib/orders/form-intake";
 import { computeCashCollection } from "@/lib/pricing";
-import { checkWebhookSecret } from "@/lib/http/auth";
+import { requireWebhookSecret } from "@/lib/http/auth";
 
 // Parse a free-text AED amount (e.g. "AED 154", "154 درهم", "129.0") to a number.
 function parseAed(raw?: string): number | null {
@@ -70,14 +71,14 @@ export async function POST(req: NextRequest) {
     // Surface a clear, actionable error instead of an opaque 500. The most common
     // cause is Supabase being configured while a migration (order_confirmations /
     // intake_orders) has not been applied yet.
-    const message = err instanceof Error ? err.message : "intake failed";
-    console.error("[form-intake] error:", message);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    const conflict = err instanceof IntakeConflict;
+    console.error("[form-intake] request failed");
+    return NextResponse.json({ ok: false, error: conflict ? "Idempotency key conflicts with existing submission" : "Intake processing failed; retry with the same idempotency key" }, { status: conflict ? 409 : 503 });
   }
 }
 
 async function handlePost(req: NextRequest) {
-  if (!checkWebhookSecret(req)) {
+  if (!requireWebhookSecret(req)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -86,6 +87,11 @@ async function handlePost(req: NextRequest) {
     raw = (await req.json()) as Record<string, any>;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const submissionId = req.headers.get("x-idempotency-key") || raw.submissionId;
+  if (typeof submissionId !== "string" || !submissionId.trim() || submissionId.length > 200) {
+    return NextResponse.json({ ok: false, error: "Stable x-idempotency-key or submissionId required" }, { status: 400 });
   }
 
   const submission = coerce(raw);
@@ -112,17 +118,8 @@ async function handlePost(req: NextRequest) {
   }
 
   // ---- Valid: open a confirmation and message the customer with buttons. ----
-  const token = newToken();
+  let token = newToken();
   const orderId = (raw["Order ID"] || raw["orderId"] || raw["order_id"] || "") as string;
-  await createConfirmation({
-    token,
-    orderId: orderId || null,
-    customerName: validation.normalized.fullName,
-    phone: validation.normalized.whatsappNumber, // the number we extract & message
-    email: validation.normalized.email || null,
-    orderSummary: submission.orderSummary || null,
-    lead: { ...submission, ...validation.normalized },
-  });
 
   // Expected cash collection = order value + 25 AED delivery. Only when an order
   // value is supplied (form "Order Total" or a known SKU+qty) — never guessed.
@@ -132,19 +129,7 @@ async function handlePost(req: NextRequest) {
     quantity: Number(raw["quantity"] || raw["Quantity"]) || null,
   });
 
-  const { body, buttons } = buildConfirmationRequest({
-    token,
-    customerName: validation.normalized.fullName,
-    phone: validation.normalized.whatsappNumber,
-    orderSummary: submission.orderSummary || null,
-    totalAed: cash?.total ?? null,
-    needsMapPin: validation.needsMapPin,
-  });
-  const whatsapp = await sendWhatsAppButtons(validation.normalized.whatsappNumber, body, buttons);
-
-  // Persist the validated lead to BOTH destinations: Supabase intake_orders
-  // (durable source of truth) and the Google Sheet ("add lead to Sheet").
-  const persisted = await recordIntakeOrder({
+  const intake: IntakeOrder = {
     token,
     orderId: orderId || undefined,
     customerName: validation.normalized.fullName,
@@ -163,7 +148,28 @@ async function handlePost(req: NextRequest) {
     instagramUsername: submission.instagramUsername,
     criticalDataStatus: "DATA INTACT",
     orderStatus: "Awaiting Customer Confirmation",
+  };
+  const receipt = await ingestSubmission(submissionId, { ...submission, expectedCash: cash }, intake);
+  token = receipt.token;
+  intake.token = token;
+  const sheets = receipt.created ? await mirrorNewSubmission(intake) : {
+    ok: false, provider: "not_repeated", detail: "Existing intake retained; check sheet_synced for mirror reconciliation",
+  };
+  const persisted = { supabase: { ok: true, persisted: true, provider: "supabase" }, sheets };
+  const { body, buttons } = buildConfirmationRequest({
+    token,
+    customerName: validation.normalized.fullName,
+    phone: validation.normalized.whatsappNumber,
+    orderSummary: submission.orderSummary || null,
+    totalAed: cash?.total ?? null,
+    needsMapPin: validation.needsMapPin,
   });
+  const whatsapp = receipt.status !== "awaiting"
+    ? { ok: true, provider: "resolved", channel: "whatsapp", detail: "Confirmation already resolved; no new invitation sent" }
+    : receipt.notification_sent
+    ? { ok: true, provider: "receipt", channel: "whatsapp", detail: "Previously accepted by provider; not sent again" }
+    : await sendWhatsAppButtons(validation.normalized.whatsappNumber, body, buttons);
+  if (whatsapp.ok && whatsapp.provider !== "mock" && receipt.status === "awaiting" && !receipt.notification_sent) await markSubmissionNotified(submissionId);
 
   const leadRow = {
     Timestamp: new Date().toISOString(),
@@ -182,22 +188,23 @@ async function handlePost(req: NextRequest) {
     "Source Platform": submission.sourcePlatform || "",
     "Instagram Username": submission.instagramUsername || "",
     "Critical Data Status": "DATA INTACT",
-    "Order Status": "Awaiting Customer Confirmation",
+    "Order Status": receipt.status === "awaiting" ? "Awaiting Customer Confirmation" : receipt.status,
     "Confirmation Token": token,
   };
 
   return NextResponse.json(
     {
-      ok: true,
+      ok: whatsapp.ok && whatsapp.provider !== "mock",
       validation: { valid: true, issues: validation.issues },
-      orderStatus: "Awaiting Customer Confirmation",
-      confirmation: { token, channel: "whatsapp", status: "awaiting" },
+      orderStatus: receipt.status === "awaiting" ? "Awaiting Customer Confirmation" : receipt.status,
+      confirmation: { token, channel: "whatsapp", status: receipt.status },
       leadRow,
       persisted,
       notifications: [whatsapp],
-      ...(usingMemory() ? { warning: "Confirmation stored in memory (no Supabase) — configure SUPABASE for durable state." } : {}),
+      replayed: !receipt.created,
+      warning: "Sheet append is not repeated on replay; reconcile any pending or uncertain mirror write.",
     },
-    { status: 200 }
+    { status: whatsapp.ok && whatsapp.provider !== "mock" ? 200 : 503 }
   );
 }
 
