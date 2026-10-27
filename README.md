@@ -2,6 +2,8 @@
   <img src="docs/assets/banner.svg" alt="Masaar: order control console for UAE social commerce" width="100%">
 </p>
 
+<p align="center"><img src="docs/assets/hero.jpg" alt="Concept image (AI-generated). Not a product screenshot." width="100%"><br><sub><em>Concept image (AI-generated). Not a product screenshot.</em></sub></p>
+
 <p align="center"><strong>A human-approved sales and order control console for Beyond Style UAE. The agent drafts, the owner approves, the system tracks.</strong></p>
 
 <p align="center">
