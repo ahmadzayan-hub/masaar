@@ -1,9 +1,10 @@
 import { fetchRows, formatAed, formatRelative } from "@/lib/data";
-import { DemoBanner, PageHeader, OrderStatusPill, PaymentStatusPill, CourierStatusPill, SectionTitle, Kpi } from "@/components/ui";
+import { DemoBanner, PageHeader, PaymentStatusPill, CourierStatusPill, SectionTitle, Kpi } from "@/components/ui";
 import Link from "next/link";
 import { ORDER_STATUSES, STATUS_LABELS, normalizeStatus } from "@/lib/orders/lifecycle";
 import { filterByStage } from "@/lib/orders/pipeline";
 import clsx from "clsx";
+import { OrdersTable } from "@/components/orders/OrdersTable";
 
 export const dynamic = "force-dynamic";
 
@@ -119,34 +120,26 @@ export default async function OrdersPage({
         ))}
       </div>
 
-      {/* Detailed table */}
+      {/* Detailed table: search, payment filter and sort run in the browser */}
       <div className="card mt-6">
         <SectionTitle>All orders</SectionTitle>
-        <div className="overflow-x-auto">
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Order</th><th>Customer</th><th>City</th><th>Total</th>
-                <th>Status</th><th>Payment</th><th>Courier</th><th>ETA</th><th>When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((o) => (
-                <tr key={o.id as string}>
-                  <td className="font-medium"><Link href={`/orders/${o.id as string}`} className="hover:underline">{o.product_summary as string}</Link></td>
-                  <td>{o.customer_name as string}</td>
-                  <td>{(o.delivery_city as string)} <span className="text-xs text-gray-400">{o.delivery_area as string}</span></td>
-                  <td>{formatAed(Number(o.total_amount))}</td>
-                  <td><OrderStatusPill status={o.order_status as string} /></td>
-                  <td><PaymentStatusPill status={o.payment_status as string} /></td>
-                  <td><CourierStatusPill status={o.courier_status as string} /></td>
-                  <td className="text-xs text-gray-500">{(o.expected_delivery_date as string) ?? "—"}</td>
-                  <td className="text-xs text-gray-500">{formatRelative(o.created_at as string)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <OrdersTable
+          rows={rows.map((o) => ({
+            id: String(o.id),
+            product: String(o.product_summary ?? ""),
+            customer: String(o.customer_name ?? ""),
+            city: String(o.delivery_city ?? ""),
+            area: String(o.delivery_area ?? ""),
+            totalAed: Number(o.total_amount) || 0,
+            totalLabel: formatAed(Number(o.total_amount)),
+            orderStatus: String(o.order_status ?? ""),
+            paymentStatus: String(o.payment_status ?? "none"),
+            courierStatus: String(o.courier_status ?? "none"),
+            eta: (o.expected_delivery_date as string) ?? "\u2014",
+            createdAt: String(o.created_at ?? ""),
+            createdLabel: formatRelative(o.created_at as string),
+          }))}
+        />
       </div>
     </div>
   );

@@ -1,220 +1,202 @@
-# Beyond Style UAE — Customer Conversion & Order Control Agent
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Masaar: order control console for UAE social commerce" width="100%">
+</p>
 
-## Product Authority
+<p align="center"><img src="docs/assets/hero.jpg" alt="Concept image (AI-generated). Not a product screenshot." width="100%"><br><sub><em>Concept image (AI-generated). Not a product screenshot.</em></sub></p>
+
+<p align="center"><strong>A human-approved sales and order control console for Beyond Style UAE. The agent drafts, the owner approves, the system tracks.</strong></p>
+
+<p align="center">
+  <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white">
+  <img alt="React 18" src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
+  <img alt="Tailwind CSS 3" src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white">
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Postgres-3FCF8E?logo=supabase&logoColor=white">
+  <img alt="Vitest" src="https://img.shields.io/badge/Vitest-2-6E9F18?logo=vitest&logoColor=white">
+</p>
+
+## Overview
+
+Masaar is the order control console for **Beyond Style UAE** (BEYOND CONNECT GENERAL TRADING L.L.C.). It is **not** an auto-reply bot. It is a control tower for UAE social commerce. The agent drafts replies and order actions. The owner approves. The system tracks every order from first message to after-sales. Automation comes later, only after the system proves it does not make pricing, delivery, stock or privacy mistakes.
+
+Every drafted customer reply passes through a deterministic **guardrail engine** before an operator can approve it. Automating too early scales mistakes. This console scales discipline instead.
 
 | | |
 |---|---|
-| **Primary User** | Beyond Style owner & operators |
-| **Job To Be Done** | Run every order from first message to after-sales, without chaos |
-| **System of Record** | Customer / order / payment / fulfilment lifecycle |
-| **System of Intelligence** | Analysis, guardrails, margin-aware offer suggestions |
-| **Explicit Non-Goals** | Product design (→ 66) · market/portfolio strategy (→ BSOS) · owning deterministic commerce rules (→ Commerce Policy Engine) · new dashboards before security + real workflow |
+| **Primary user** | Beyond Style owner and operators |
+| **Job to be done** | Move every order from first contact to delivered, and know which orders are stuck and whose move it is |
+| **System of record** | Customer, order, payment and fulfilment lifecycle, plus the append-only audit log |
+| **System of intelligence** | Pipeline state, guardrails and margin-aware offer suggestions |
+| **Explicit non-goals** | Product design, market and portfolio strategy, owning deterministic commerce rules |
 
+See [`docs/PRODUCT_AUTHORITY.md`](docs/PRODUCT_AUTHORITY.md) for the full product authority.
 
-A **human-approved sales operating console** for Beyond Style UAE
-(BEYOND CONNECT GENERAL TRADING L.L.C). This is **not** an auto-reply bot. It is
-a control tower for UAE social commerce: the agent **drafts** replies and order
-actions, the owner **approves**, the system **tracks**, and the dashboard
-**learns**. Automation comes later — only after the system proves it does not
-make pricing, delivery, stock, or privacy mistakes.
+## Key features
 
-> The agent drafts → you approve → the system tracks → the dashboard learns → automation comes later.
+- **Mission Control dashboard** (`/`). Today band, interactive order pipeline, revenue trend, attention queue, status and funnel charts, top products and lead sources.
+- **Orders** (`/orders`). Stage filter, KPI strip, kanban board and an "All orders" table with live search (product, customer, city, area), payment status filter and sortable columns.
+- **Intake and AI analysis** (`/intake`). Paste a customer message and known facts, optionally a screenshot. `POST /api/analyze` returns a structured analysis plus guardrail findings. The operator reviews, copies the reply and approves.
+- **Guardrail engine** (`src/lib/guardrails.ts`). Blocks unsupported material claims, privacy leaks, unverified stock or price, unsafe delivery promises and dispatch before payment.
+- **Form intake and WhatsApp confirmation gate**. A Google Form submission is validated, then held until the customer confirms on WhatsApp.
+- **Live confirmations queue** (`/confirmations`). Polls every 5 seconds, with resend capped at 3 attempts.
+- **Durable persistence** to Supabase `intake_orders` and an optional Google Sheets mirror.
+- **Configurable AI provider**: `groq`, `together`, `openai`, `openai_compatible`, `anthropic`, `gemini` or `mock`. No keys in code.
+- **Demo mode**. With no Supabase env, every page renders a labelled in-memory sample dataset, so the console works on first run.
+- **Auth gate** (`src/middleware.ts`). When Supabase is configured, pages require a session and API routes return 401, except `/login` and the external webhooks.
 
-## Why this shape
+## Screenshots
 
-If you automate too early, you scale mistakes. This MVP scales *discipline*
-instead: every drafted customer reply is forced through a **guardrail engine**
-before an operator can approve and send it.
+All screenshots show the built-in **demo dataset** (sample data, not real customers).
 
-## Stack
+| Desktop (1440 x 900) | Mobile (390 x 844) |
+|---|---|
+| <img src="docs/assets/screenshots/dashboard-desktop.png" alt="Mission Control dashboard on desktop" width="560"> | <img src="docs/assets/screenshots/dashboard-mobile.png" alt="Mission Control dashboard on mobile" width="220"> |
+| <img src="docs/assets/screenshots/orders-desktop.png" alt="Orders page on desktop" width="560"> | <img src="docs/assets/screenshots/orders-mobile.png" alt="Orders page on mobile" width="220"> |
 
-- **Next.js 14** (App Router) + **TypeScript**
-- **Tailwind CSS**
-- **Supabase** (Postgres + Auth + Storage)
-- **Configurable AI provider wrapper** — OpenAI / Anthropic (Claude) / Gemini /
-  `mock`. No API keys are hard-coded; everything is env-driven.
-- **Vitest** for the guardrail/logic test suite.
+Orders table with search and payment filter applied:
+
+<img src="docs/assets/screenshots/orders-table-desktop.png" alt="Orders table filtered by search term and payment status" width="720">
 
 ## Quick start
 
+Requirements: Node.js 20 or later.
+
 ```bash
-npm install
-cp .env.example .env.local      # fill in Supabase + AI provider (optional)
-npm run test                    # guardrail / intake / confirmation / pricing suite
-npm run dev                     # http://localhost:3000
+npm ci
+cp .env.example .env.local   # optional: Supabase and AI provider settings
+npm test                     # guardrail, intake, confirmation, pricing and pipeline suites
+npm run dev                  # http://localhost:3000
 ```
 
-> Single Next.js app at the repo root. The standalone Python LangGraph backend
-> lives in `python-agent/` (see its own README).
-
-The app runs **before** Supabase is configured (pages show a "connect Supabase"
-hint) and **before** an AI key is set (`AI_PROVIDER=mock` returns placeholder
-analysis so you can see the flow end-to-end).
+The app runs before Supabase is configured (demo mode) and before an AI key is set (`AI_PROVIDER=mock` returns placeholder analysis).
 
 ### Database
 
-In the Supabase SQL editor (or via the CLI), run in order:
+In the Supabase SQL editor or CLI, run the migrations in `supabase/migrations/` in order (`0001` to `0006`), then `supabase/seed.sql` for the default catalogue, offers, couriers, prompts, settings and test-scenario conversations.
 
-1. `supabase/migrations/0001_schema.sql` — all tables + RLS.
-2. `supabase/seed.sql` — default catalogue, offers, couriers, prompts,
-   settings, and the §30 test-scenario conversations.
+## Scripts
 
-### Environment
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start the development server |
+| `npm run build` | Production build |
+| `npm start` | Serve the production build |
+| `npm run lint` | ESLint (`next lint`) |
+| `npm run typecheck` | TypeScript check (`tsc --noEmit`) |
+| `npm test` | Vitest suite (79 tests) |
 
-| Var | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client |
-| `SUPABASE_SERVICE_ROLE_KEY` | server-side privileged writes |
-| `AI_PROVIDER` | `openai` \| `anthropic` \| `gemini` \| `mock` |
-| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | provider keys |
-| `WEBHOOK_SECRET` | optional shared secret for `/api/webhook/form-intake` |
-| `WHATSAPP_PROVIDER` + `WHATSAPP_TOKEN` / `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp send (`meta` \| `mock`) |
-| `WHATSAPP_VERIFY_TOKEN` / `WHATSAPP_APP_SECRET` | inbound `/api/webhook/whatsapp` verification + signature |
-| `EMAIL_PROVIDER` + `RESEND_API_KEY` / `EMAIL_FROM` | email thank-you (`resend` \| `mock`) |
+## Project structure
 
-## Form intake + WhatsApp confirmation gate
-
-The Google Form flow is **form → webhook → validate → WhatsApp confirm → release**.
-An order is **held until the customer confirms on WhatsApp** — this proves the
-number is reachable/correct and that the customer still wants the order, so the
-Halan courier is never dispatched to a wrong number or a non-responsive customer.
-
-**Wiring the form.** Google Forms have no native webhook, so
-`scripts/google-form-apps-script.gs` (an `onFormSubmit` Apps Script) POSTs each
-submission to the webhook. Set the `WEBHOOK_URL` / `WEBHOOK_SECRET` script
-properties and add an "On form submit" trigger.
-
-**`POST /api/webhook/form-intake`** — on each submission:
-
-1. (optional) checks `WEBHOOK_SECRET` via the `x-webhook-secret` header;
-2. validates the details (`src/lib/intake/validate.ts`): UAE mobile normalized to
-   `+9715XXXXXXXX`, recognized emirate, address with landmark detail;
-3. **valid** → opens an `order_confirmations` record (status `awaiting`),
-   **extracts the customer's number, and sends a WhatsApp confirmation request
-   with interactive buttons** (✅ Confirm / ✏️ Edit / ❌ Cancel). Returns the
-   `leadRow` with `Order Status = "Awaiting Customer Confirmation"` (HTTP 200);
-4. **invalid** → asks the customer (WhatsApp/email) to fix the flagged fields and
-   opens no confirmation (HTTP 422).
-
-**`/api/webhook/whatsapp`** — the inbound side:
-
-- `GET` → Meta verification handshake (`WHATSAPP_VERIFY_TOKEN`);
-- `POST` → receives the reply (button tap, or free-text نعم/YES/لا/تعديل as a
-  fallback), verifies `X-Hub-Signature-256` (`WHATSAPP_APP_SECRET`), matches the
-  open confirmation, updates its status, and replies with the right follow-up.
-  A **Confirm releases the order to preparation**; Edit/Cancel hold or cancel it.
-
-Confirmation state persists in Supabase (`order_confirmations`, migration
-`0003`) when `SUPABASE_SERVICE_ROLE_KEY` is set; otherwise an in-memory fallback
-runs (dev/test only — the response includes a `warning`). All messaging is
-env-driven with a **mock fallback** (works with zero keys); set
-`WHATSAPP_PROVIDER=meta` (+ token / phone-number id / verify token / app secret)
-to go live. See `src/lib/notify/` and `src/lib/confirm/`.
-
-```bash
-# 1) form submit → opens confirmation + sends WhatsApp buttons
-curl -X POST http://localhost:3000/api/webhook/form-intake -H 'content-type: application/json' \
-  -d '{"Full Name":"Aisha","Mobile Number":"050 653 2084","Emirate":"Dubai","Full Address":"Marina Vista Tower, Flat 904, Street 12","Order Summary Confirmation":"2 bracelets"}'
-# 2) customer taps Confirm → order released (token from step 1)
-curl -X POST http://localhost:3000/api/webhook/whatsapp -H 'content-type: application/json' \
-  -d '{"entry":[{"changes":[{"value":{"messages":[{"from":"971506532084","type":"interactive","interactive":{"button_reply":{"id":"confirm:<TOKEN>"}}}]}}]}]}'
+```
+src/
+  app/              App Router pages and API routes
+    api/            analyze, confirmations, orders/[id]/status, webhook/{form-intake,whatsapp}
+  components/       Nav, CommandPalette, charts, ui primitives, orders/*
+  lib/
+    guardrails.ts   control tower checks (pure, tested)
+    ai/             provider wrapper, prompts, analysis pipeline
+    intake/ confirm/ notify/ orders/ sheets/   intake, confirmation gate, messaging, persistence
+    demo/seed.ts    in-memory demo dataset
+  middleware.ts     auth gate
+supabase/           SQL migrations and seed
+tests/              Vitest suites
+python-agent/       standalone LangGraph order pipeline (Python)
+landing/            static bilingual landing page (no build step)
+scripts/            Google Form Apps Script
+docs/               product authority, agent spec, audit baseline, assets
 ```
 
-The Python LangGraph core (`python-agent/`) mirrors this: Agent 1 posts the
-WhatsApp confirmation request and a **confirmation gate** holds the order until
-`confirmation_status == "confirmed"` before any fulfillment runs.
+## Architecture
 
-### Real-time operations
+```mermaid
+flowchart LR
+  A[Customer message or Google Form] --> B["/api/analyze or /api/webhook/form-intake"]
+  B --> C[AI provider wrapper]
+  C --> D[Guardrail engine]
+  D --> E{Operator review}
+  E -- approve --> F[Reply or WhatsApp confirmation]
+  F --> G["/api/webhook/whatsapp"]
+  G --> H[(Supabase + Google Sheets)]
+  H --> I[Dashboard, orders, confirmations]
+```
 
-- **Live queue page** `/confirmations` — operator view that polls every 5s and
-  shows the awaiting / confirmed / cancelled / edit / expired queue with counts.
-  The sidebar carries a live "awaiting" badge. Operators can **Resend** the
-  WhatsApp confirmation (capped at 3 attempts).
-- **Idempotency** — inbound WhatsApp events are de-duplicated by Meta message id
-  (`processed_events`, migration `0004`), so webhook retries never double-confirm
-  or double-reply.
-- **Auto-expiry** — awaiting confirmations older than `CONFIRMATION_TTL_HOURS`
-  (default 24h, the T+24 stock lock) are marked `expired` on read.
-- **Operator/automation API** — `GET /api/confirmations` (queue + counts),
-  `GET /api/confirmations/[token]` (poll one), `POST /api/confirmations/[token]`
-  `{ "action": "resend" }` (resend, `CONFIRMATION_MAX_ATTEMPTS` cap).
+- Guardrails are pure functions with no I/O, so they are deterministic and unit tested.
+- The provider wrapper returns plain strings. `analyze.ts` extracts JSON and validates it with Zod.
+- Every server page degrades to demo data without Supabase, and messaging falls back to a logged mock without provider keys.
 
-### Durable order persistence (Supabase + Google Sheets)
+### Form intake and WhatsApp confirmation
 
-The validated lead is written to **both** destinations (`src/lib/orders/sink.ts`),
-each independent and env-driven (mock-logged if unset):
+1. `POST /api/webhook/form-intake` checks the optional `x-webhook-secret`, validates the UAE mobile (normalised to `+9715XXXXXXXX`), emirate and address.
+2. A valid lead opens an `order_confirmations` record and sends a WhatsApp message with Confirm, Edit and Cancel buttons. An invalid lead gets a correction request (HTTP 422).
+3. `GET /api/webhook/whatsapp` handles the Meta verification handshake. `POST` verifies `X-Hub-Signature-256`, matches the reply (button or free text such as نعم, YES, لا, تعديل) and updates the order. Confirm releases the order to preparation.
+4. Inbound events are de-duplicated by Meta message id. Awaiting confirmations older than `CONFIRMATION_TTL_HOURS` (default 24) expire on read.
 
-- **Supabase `intake_orders`** (migration `0005`) — the durable source of truth.
-  Inserted at form-intake with `Order Status = "Awaiting Customer Confirmation"`;
-  the inbound webhook updates it to `Confirmed - In Preparation` / `Edit
-  Requested` / `Cancelled by Customer`. Needs `SUPABASE_SERVICE_ROLE_KEY`.
-- **Google Sheets** — the "add lead to Sheet" mirror via a dependency-free Sheets
-  v4 client (`src/lib/sheets/client.ts`; a service-account JWT signed with Node
-  `crypto` — no `googleapis` dependency). Appends the lead row at intake and
-  updates that row's status on confirmation, located by the **Confirmation Token**
-  column. Set `GOOGLE_SERVICE_ACCOUNT_JSON` (raw or base64),
-  `GOOGLE_SHEETS_SPREADSHEET_ID`, and (optional) `GOOGLE_SHEETS_TAB`, then share
-  the sheet with the service account's `client_email`.
+`scripts/google-form-apps-script.gs` posts each form submission to the webhook.
 
-  > For status-updates to land, the target tab needs an **`Order Status`** and a
-  > **`Confirmation Token`** header (the appended row writes them as the last two
-  > columns). The webhook response reports each target's result under `persisted`.
-
-The Python core already syncs to Google Sheets via `gspread` in Agent 3
-(Logistics & QC) using `GOOGLE_APPLICATION_CREDENTIALS`.
-
-## The control tower (guardrail engine)
-
-`src/lib/guardrails.ts` runs every drafted reply through checks. A **fail**
-blocks the Approve button; a **warn** surfaces a caution; some findings force
-**owner approval**:
+### Guardrails
 
 | Guard | Rule |
-| --- | --- |
-| Claim (§7) | Blocks "real gold", waterproof, anti-tarnish, etc. without supplier evidence; auto-rewords to safe wording |
-| Privacy (§14) | Detects phone / address / payment data leaking into a reply |
-| Price (§6) | Requires an active, unexpired offer before quoting; price-first |
-| Stock (§8) | Blocks unverified in-stock promises |
-| Delivery (§10) | Blocks same-day-outside-Dubai without courier confirmation |
-| Payment (§9) | No courier dispatch until payment is confirmed |
-| VAT (§6/§9) | Flags missing VAT line when applicable |
-| Arabic name (§4) | Never blind-transliterates; falls back to أستاذة / أستاذ |
-| Length / answered / payment-step (§5/§29) | Keeps replies short, on-point, and converting |
+|---|---|
+| Claim | Blocks "real gold", waterproof, anti-tarnish and similar claims without supplier evidence |
+| Privacy | Detects phone, address or payment data leaking into a reply |
+| Price | Requires an active, unexpired offer before quoting |
+| Stock | Blocks unverified in-stock promises |
+| Delivery | Blocks same-day outside Dubai without courier confirmation |
+| Payment | No courier dispatch until payment is confirmed |
+| VAT | Flags a missing VAT line when applicable |
+| Arabic name | Never blind-transliterates; falls back to أستاذة or أستاذ |
 
-Plus: QC checklist (§11), human-approval matrix (§24), fraud screening (§23),
-and the journey-stage playbook (§16) live in `src/lib/operations.ts`.
+## Deploy on Vercel
 
-## Core flow (acceptance §31, §33)
+`vercel.json` is already in the repository.
 
-`/intake` → paste a customer message + known facts (+ optional screenshot) →
-`POST /api/analyze` → structured `AnalysisOutput` JSON + guardrail findings →
-operator reviews badges, copies the (possibly auto-corrected) reply, and
-**Approves to send**.
+| Setting | Value |
+|---|---|
+| Framework preset | Next.js |
+| Root directory | `.` (repository root) |
+| Install command | `npm ci` |
+| Build command | `npm run build` |
+| Output directory | `.next` |
+| Region | `fra1` (set in `vercel.json`) |
 
-## Review scorecard
+**Environment variables.** None are required for the build. Without Supabase variables the deployment runs in public demo mode with sample data. For a live deployment set the variables from [`.env.example`](.env.example):
 
-| Area | Where it lives |
-| --- | --- |
-| Customer intake | `/intake` (text + screenshot) |
-| AI analysis (intent/persona/product/risk/next action) | `src/lib/ai/analyze.ts` |
-| Arabic name handling | `src/lib/arabic-names.ts` (tested) |
-| Price / stock / delivery / payment control | `src/lib/guardrails.ts` (tested) |
-| Privacy detection | guardrails + intake pre-check |
-| QC checklist | `src/lib/operations.ts` (tested) |
-| Dashboard (conversion / payment / delivery) | `/` |
-| Daily & weekly improvement loops | `/reports` |
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client. Setting these also turns on the login gate |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side privileged writes |
+| `AI_PROVIDER` and the matching key and model (`GROQ_*`, `TOGETHER_*`, `OPENAI_*`, `OPENAI_COMPATIBLE_*`, `ANTHROPIC_*`, `GEMINI_*`) | AI analysis. Defaults to `mock` |
+| `WEBHOOK_SECRET` | Shared secret for the form-intake webhook and automation calls |
+| `WHATSAPP_PROVIDER`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` | WhatsApp send and inbound verification (`meta` or `mock`) |
+| `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | Email thank-you messages (`resend` or `mock`) |
+| `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEETS_SPREADSHEET_ID`, `GOOGLE_SHEETS_TAB` | Google Sheets mirror |
+| `CONFIRMATION_TTL_HOURS`, `CONFIRMATION_MAX_ATTEMPTS` | Confirmation gate lifecycle (defaults 24 and 3) |
 
-## Tests
+The `landing/` folder is a separate static site and can be deployed as its own Vercel project with `landing` as the root directory and no build command.
 
-`npm run test` covers the §30 business scenarios against the pure logic:
-real-gold claim, privacy leak, unverified stock, same-day Sharjah delivery,
-dispatch-before-payment, VAT math, Arabic name mapping (Rehab→رحاب, Kay kept
-as-is), QC gating, approval matrix, and fraud signals.
+## Status and known limitations
 
-## Pages (§26)
+- MVP stage. Demo mode uses synthetic sample data. Nothing shown in the screenshots is real customer data.
+- Most record pages (customers, inventory, offers, suppliers, reviews) are read-only lists. Create and edit forms are not built yet.
+- Daily and weekly reviews show the section structure and KPI snapshot. Auto-drafting them is not wired.
+- Screenshot upload is sent to the AI for analysis but is not yet stored in Supabase Storage.
+- Without `SUPABASE_SERVICE_ROLE_KEY`, confirmation state uses an in-memory fallback that is for development only.
+- WhatsApp, email and Sheets integrations default to logged mocks until credentials are set.
 
-Login · Dashboard · New Conversation (intake) · Customer Inbox · Customers ·
-Orders · Inventory · Offers · Payments · Courier Tracking · Suppliers · Reviews ·
-Reports & Reviews · Settings · Prompt Management · Audit Log.
+See [`ROADMAP.md`](ROADMAP.md) for planned phases and [`DEVELOPER_NOTES.md`](DEVELOPER_NOTES.md) for design decisions.
 
-See `DEVELOPER_NOTES.md` for architecture details and `ROADMAP.md` for phases.
+## الملخص العربي
+
+<div dir="rtl" lang="ar">
+
+**مسار** هو لوحة التحكم في الطلبات لمتجر **Beyond Style UAE** التابع لشركة بيوند كونكت للتجارة العامة ذ.م.م. وهو ليس روبوت رد آلي، بل برج مراقبة للتجارة عبر وسائل التواصل الاجتماعي في دولة الإمارات: يقترح الوكيل الذكي صياغة الردود وإجراءات الطلب، ويعتمدها المالك، ويتتبع النظام كل طلب من أول رسالة حتى خدمة ما بعد البيع.
+
+تمر كل مسودة رد على محرك ضوابط ثابت يمنع الادعاءات غير الموثقة عن المواد، وتسريب البيانات الشخصية، والوعود غير المؤكدة بالسعر أو التوفر أو التوصيل، وشحن الطلب قبل تأكيد الدفع. كما يتضمن النظام بوابة تأكيد عبر واتساب تُبقي الطلب معلقاً حتى يؤكده العميل.
+
+يعمل التطبيق مباشرة بوضع العرض التجريبي ببيانات نموذجية عند عدم ضبط Supabase، ويمكن نشره على Vercel دون أي متغيرات بيئة إلزامية.
+
+</div>
+
+## License and ownership
+
+Owned by Ahmed Zaian for Beyond Style UAE (BEYOND CONNECT GENERAL TRADING L.L.C., Dubai). No license file is included, so no open-source license is granted. All rights reserved.
