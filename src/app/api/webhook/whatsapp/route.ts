@@ -18,9 +18,9 @@ import {
   buildFollowUp,
   ConfirmAction,
 } from "@/lib/confirm/messages";
-import { getByToken, getLatestAwaitingByPhone, updateStatus, wasProcessed, markProcessed } from "@/lib/confirm/store";
+import { getByToken, getLatestAwaitingByPhone, getReplyReceipt, wasProcessed, markProcessed } from "@/lib/confirm/store";
 import { sendWhatsApp } from "@/lib/notify/provider";
-import { updateOrderStatus, statusForAction } from "@/lib/orders/sink";
+import { applyConfirmationReply, mirrorOrderStatus } from "@/lib/orders/sink";
 
 export const runtime = "nodejs";
 
@@ -46,28 +46,31 @@ export function GET(req: NextRequest) {
 
 // ---- POST: inbound messages ----
 export async function POST(req: NextRequest) {
-  const rawBody = await req.text();
+  // Authenticate the original bytes before any UTF-8/BOM normalization.
+  const rawBody = Buffer.from(await req.arrayBuffer());
   if (!verifySignature(rawBody, req.headers.get("x-hub-signature-256"))) {
     return NextResponse.json({ ok: false, error: "bad signature" }, { status: 401 });
   }
 
   let body: any;
   try {
-    body = JSON.parse(rawBody || "{}");
+    body = JSON.parse(rawBody.length ? new TextDecoder("utf-8", { fatal: true }).decode(rawBody) : "{}");
   } catch {
     return NextResponse.json({ ok: false, error: "invalid JSON" }, { status: 400 });
   }
 
   const messages = parseInbound(body);
+  let retryRequired = false;
   const results: Array<{
     from: string;
     action: ConfirmAction | null;
     status: string;
-    persisted?: { supabase: string; sheets: string };
+    persisted?: { supabase: string; sheets: string; coreOrder?: string };
   }> = [];
 
   for (const msg of messages) {
    try {
+    if (!msg.messageId) throw new Error("message id required");
     // Idempotency: Meta redelivers on retry — skip ids we already handled.
     if (msg.messageId && (await wasProcessed(msg.messageId))) {
       results.push({ from: msg.from, action: null, status: "duplicate (already processed)" });
@@ -78,7 +81,12 @@ export async function POST(req: NextRequest) {
     let action: ConfirmAction | null = null;
     let record = null;
 
-    if (msg.buttonId) {
+    const receipt = await getReplyReceipt(msg.messageId);
+    if (receipt) {
+      action = receipt.action;
+      record = await getByToken(receipt.token);
+    }
+    if (!receipt && msg.buttonId) {
       const parsed = parseButtonPayload(msg.buttonId);
       if (parsed) {
         action = parsed.action;
@@ -100,37 +108,45 @@ export async function POST(req: NextRequest) {
     if (!record) {
       // Do NOT mark processed — the matching confirmation may arrive moments
       // later, so a Meta retry should get another chance to match.
+      retryRequired = true;
       results.push({ from: msg.from, action, status: "no matching open confirmation" });
       continue;
     }
-    if (record.status !== "awaiting") {
+    if (record.phone !== `+${msg.from.replace(/^\+/, "")}`) {
+      throw new Error("sender mismatch");
+    }
+    if (record.status !== "awaiting" && !receipt) {
       if (msg.messageId) await markProcessed(msg.messageId);
       results.push({ from: msg.from, action, status: `already ${record.status}` });
       continue;
     }
 
-    const updated = await updateStatus(record.token, ACTION_TO_STATUS[action], { msg });
-    // Mirror the lifecycle to the durable order record + Google Sheet. A confirm
-    // sets Order Status = "Confirmed - In Preparation" (released to fulfillment).
-    const persisted = await updateOrderStatus(record.token, statusForAction(action));
-    await sendWhatsApp(record.phone, buildFollowUp(action, record.customerName));
-    if (msg.messageId) await markProcessed(msg.messageId);
+    // The RPC atomically commits confirmation, intake, core order and durable
+    // event-to-token receipt. A failed promotion leaves the confirmation awaiting.
+    const core = await applyConfirmationReply(record.token, msg.messageId, action, record.phone, { msg });
+    if (!core.ok || !core.persisted) throw new Error("confirmation persistence failed");
 
+    const sheets = await mirrorOrderStatus(record.token, action);
+    // An explicitly unconfigured mirror is visible, not a durable write. A
+    // configured mirror failure must be retried rather than silently acknowledged.
+    if (!sheets.ok) throw new Error("sheet mirror failed");
+    const notification = await sendWhatsApp(record.phone, buildFollowUp(action, record.customerName));
+    if (!notification.ok || notification.provider === "mock") throw new Error("notification not sent");
+    await markProcessed(msg.messageId);
     results.push({
-      from: msg.from,
-      action,
-      status: updated ? updated.status : "update failed",
-      persisted: { supabase: persisted.supabase.provider, sheets: persisted.sheets.provider },
+      from: msg.from, action, status: ACTION_TO_STATUS[action],
+      persisted: { supabase: core.provider, sheets: sheets.provider,
+        ...(core.orderId ? { coreOrder: `linked ${core.orderId}` } : {}),
+      },
     });
-    // action === "confirm" -> order released to preparation (status "confirmed").
    } catch (err) {
-     // One bad message must not fail the whole batch (or trigger Meta retries).
-     const message = err instanceof Error ? err.message : "processing failed";
-     console.error("[whatsapp] message error:", message);
-     results.push({ from: msg.from, action: null, status: `error: ${message}` });
+     // Retry the batch; committed successful messages are skipped by their ids.
+     // Never return database/provider details or acknowledge a dropped transition.
+     retryRequired = true;
+     console.error("[whatsapp] message processing failed");
+     results.push({ from: msg.from, action: null, status: "retry required" });
    }
   }
 
-  // Always 200 so Meta does not retry once we've accepted the event.
-  return NextResponse.json({ ok: true, handled: results });
+  return NextResponse.json({ ok: !retryRequired, handled: results }, { status: retryRequired ? 503 : 200 });
 }

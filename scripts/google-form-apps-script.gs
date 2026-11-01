@@ -10,10 +10,10 @@
  * 2. Paste this file. Set the two Script Properties below:
  *      Project Settings → Script properties:
  *        WEBHOOK_URL    = https://<your-vercel-app>/api/webhook/form-intake
- *        WEBHOOK_SECRET = <same value as the app's WEBHOOK_SECRET>  (optional)
+ *        WEBHOOK_SECRET = <same value as the app's WEBHOOK_SECRET>  (required)
  * 3. Triggers (clock icon) → Add Trigger:
  *        function: onFormSubmit, event source: From form, type: On form submit.
- * 4. Authorize when prompted. Test with a real submission.
+ * 4. Authorize when prompted. Test with an isolated synthetic submission after deployment approval.
  *
  * The field titles below map the Form's question titles to the webhook keys.
  * Adjust the right-hand strings to match your Form's exact question text.
@@ -54,6 +54,15 @@ function onFormSubmit(e) {
     }
   }
 
+  // Stable across trigger redelivery. Never generate a new random key per retry.
+  if (e && e.response && e.response.getId) {
+    payload.submissionId = 'form:' + e.source.getId() + ':' + e.response.getId();
+  } else if (e && e.range) {
+    payload.submissionId = 'sheet:' + e.source.getId() + ':' + e.range.getSheet().getSheetId() + ':' + e.range.getRow();
+  } else {
+    throw new Error('Stable submission identity unavailable; do not send an unkeyed intake');
+  }
+
   var props = PropertiesService.getScriptProperties();
   var url = props.getProperty('WEBHOOK_URL');
   var secret = props.getProperty('WEBHOOK_SECRET');
@@ -75,7 +84,7 @@ function onFormSubmit(e) {
 
   try {
     var res = UrlFetchApp.fetch(url, options);
-    Logger.log('Webhook %s -> %s', res.getResponseCode(), res.getContentText());
+    Logger.log('Webhook status %s; retain the same submissionId for retries', res.getResponseCode());
   } catch (err) {
     Logger.log('Webhook call failed: %s', err);
   }

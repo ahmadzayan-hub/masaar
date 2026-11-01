@@ -86,7 +86,8 @@ export async function createConfirmation(
 export async function getByToken(token: string): Promise<ConfirmationRecord | null> {
   const db = adminClient();
   if (db) {
-    const { data } = await db.from(TABLE).select("*").eq("token", token).maybeSingle();
+    const { data, error } = await db.from(TABLE).select("*").eq("token", token).maybeSingle();
+    if (error) throw new Error("confirmation lookup failed");
     return data ? fromRow(data) : null;
   }
   return memory.get(token) ?? null;
@@ -96,7 +97,7 @@ export async function getByToken(token: string): Promise<ConfirmationRecord | nu
 export async function getLatestAwaitingByPhone(phone: string): Promise<ConfirmationRecord | null> {
   const db = adminClient();
   if (db) {
-    const { data } = await db
+    const { data, error } = await db
       .from(TABLE)
       .select("*")
       .eq("phone", phone)
@@ -104,6 +105,7 @@ export async function getLatestAwaitingByPhone(phone: string): Promise<Confirmat
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+    if (error) throw new Error("confirmation lookup failed");
     return data ? fromRow(data) : null;
   }
   let latest: ConfirmationRecord | null = null;
@@ -156,7 +158,8 @@ export async function wasProcessed(eventId: string): Promise<boolean> {
   if (!eventId) return false;
   const db = adminClient();
   if (db) {
-    const { data } = await db.from(PROCESSED_TABLE).select("event_id").eq("event_id", eventId).maybeSingle();
+    const { data, error } = await db.from(PROCESSED_TABLE).select("event_id").eq("event_id", eventId).maybeSingle();
+    if (error) throw new Error("processed event lookup failed");
     return !!data;
   }
   return processed.has(eventId);
@@ -167,7 +170,8 @@ export async function markProcessed(eventId: string, source = "whatsapp"): Promi
   const db = adminClient();
   if (db) {
     // Ignore duplicate-key races — the row already existing is the success case.
-    await db.from(PROCESSED_TABLE).upsert({ event_id: eventId, source }, { onConflict: "event_id" });
+    const { error } = await db.from(PROCESSED_TABLE).upsert({ event_id: eventId, source }, { onConflict: "event_id" });
+    if (error) throw new Error("processed event write failed");
     return;
   }
   processed.add(eventId);
@@ -245,4 +249,15 @@ function fromRow(row: any): ConfirmationRecord {
     respondedAt: row.responded_at,
     rawReply: row.raw_reply,
   };
+}
+
+// A committed reply survives process restarts even before notification succeeds.
+// Resolve its token before the awaiting-only free-text lookup.
+export async function getReplyReceipt(eventId: string): Promise<{ token: string; action: "confirm" | "edit" | "decline" } | null> {
+  const db = adminClient();
+  if (!db) return null;
+  const { data, error } = await db.from("confirmation_reply_receipts")
+    .select("token, action").eq("event_id", eventId).maybeSingle();
+  if (error) throw new Error("reply receipt lookup failed");
+  return data;
 }
