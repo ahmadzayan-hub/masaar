@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="t d">
+  <title id="t">Masaar</title>
+  <desc id="d">Masaar: order control console for UAE social commerce. AI drafts, the owner approves.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1626"/>
+      <stop offset="1" stop-color="#162237"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a6a38"/>
+      <stop offset="1" stop-color="#c9a86a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0" r="0.6">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#glow)"/>
+
+  <!-- Pipeline art: stages joined by a path, one stage held at the approval gate -->
+  <g transform="translate(792 96)" fill="none">
+    <path d="M0 80 H440" stroke="#ffffff" stroke-opacity="0.14" stroke-width="2"/>
+    <path d="M0 80 H250" stroke="#22d3ee" stroke-opacity="0.7" stroke-width="2"/>
+    <g fill="#162237" stroke="#22d3ee" stroke-opacity="0.55" stroke-width="2">
+      <rect x="-24" y="56" width="48" height="48" rx="12"/>
+      <rect x="66" y="56" width="48" height="48" rx="12"/>
+      <rect x="156" y="56" width="48" height="48" rx="12"/>
+    </g>
+    <rect x="236" y="46" width="68" height="68" rx="16" fill="url(#gold)"/>
+    <path d="M256 81 l9 9 l19 -20" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#162237" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2">
+      <rect x="336" y="56" width="48" height="48" rx="12"/>
+      <rect x="416" y="56" width="48" height="48" rx="12" stroke="#34d399" stroke-opacity="0.6"/>
+    </g>
+    <circle cx="0" cy="80" r="5" fill="#22d3ee"/>
+    <circle cx="90" cy="80" r="5" fill="#22d3ee"/>
+    <circle cx="180" cy="80" r="5" fill="#22d3ee"/>
+    <circle cx="360" cy="80" r="5" fill="#ffffff" fill-opacity="0.35"/>
+    <circle cx="440" cy="80" r="5" fill="#34d399"/>
+    <text x="270" y="152" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="14" fill="#c9a86a" letter-spacing="2">OWNER APPROVAL</text>
+  </g>
+
+  <!-- Wordmark -->
+  <rect x="80" y="104" width="56" height="56" rx="14" fill="url(#gold)"/>
+  <text x="108" y="140" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff">BS</text>
+  <text x="156" y="148" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="52" font-weight="700" fill="#ffffff">Masaar</text>
+  <text x="356" y="146" direction="rtl" text-anchor="end" font-family="Noto Kufi Arabic, Noto Sans Arabic, Geeza Pro, Tahoma, sans-serif" font-size="34" fill="#c9a86a">مسار</text>
+
+  <text x="80" y="210" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="26" fill="#e8edf5">Order control console for UAE social commerce</text>
+  <text x="80" y="250" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="20" fill="#93a1b7">AI drafts the reply. The owner approves. The system tracks every order.</text>
+  <rect x="80" y="290" width="120" height="4" rx="2" fill="url(#gold)"/>
+  <text x="80" y="330" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="15" fill="#93a1b7" letter-spacing="1.5">BEYOND STYLE UAE</text>
+</svg>

@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-[color:rgb(var(--hairline))] bg-white/70 backdrop-blur-xl md:block">
             <Nav badges={badges} />
           </aside>
-          <main className="flex-1">
+          <main className="min-w-0 flex-1">
             <div className="mx-auto w-full max-w-6xl p-4 md:p-8">
               <div className="mb-3 md:hidden">
                 <Nav mobile badges={badges} />

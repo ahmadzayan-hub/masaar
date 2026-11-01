@@ -143,6 +143,7 @@ export default async function Dashboard() {
           <SectionTitle action={<Link href="/orders" className="muted text-xs underline">All orders →</Link>}>
             Latest orders
           </SectionTitle>
+          <div className="overflow-x-auto">
           <table className="tbl">
             <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Payment</th><th>When</th></tr></thead>
             <tbody>
@@ -162,6 +163,7 @@ export default async function Dashboard() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
         <div className="card">
           <SectionTitle action={<Link href="/reviews" className="muted text-xs underline">All →</Link>}>
