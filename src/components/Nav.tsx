@@ -13,6 +13,7 @@ export interface NavBadges {
 }
 
 const NAV: { href: string; label: string; group: string; icon: string; badgeKey?: keyof NavBadges }[] = [
+  { href: "/replies", label: "Reply libraries", group: "Operate", icon: "↗" },
   { href: "/", label: "Dashboard", group: "Operate", icon: "■", badgeKey: "attention" },
   { href: "/intake", label: "New Conversation", group: "Operate", icon: "✎" },
   { href: "/confirmations", label: "WhatsApp Confirmations", group: "Operate", icon: "✓", badgeKey: "confirmations" },
