@@ -5,6 +5,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import clsx from "clsx";
+import CsvExport from '@/components/CsvExport';
+import { recordsCsv } from '@/lib/operator-productivity';
 import { OrderStatusPill, PaymentStatusPill, CourierStatusPill } from "@/components/ui";
 
 export interface OrderRowView {
@@ -92,6 +94,7 @@ export function OrdersTable({ rows }: { rows: OrderRowView[] }) {
 
   return (
     <div>
+      <div className="mb-3"><CsvExport csv={recordsCsv(visible.map(row => ({ ...row })), ['id', 'product', 'customer', 'city', 'area', 'totalAed', 'orderStatus', 'paymentStatus', 'courierStatus', 'createdAt'])} filename={`masaar-orders-${new Date().toISOString().slice(0, 10)}.csv`} /></div>
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
         <label className="sr-only" htmlFor="orders-search">Search orders</label>
         <input

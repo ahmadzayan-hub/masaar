@@ -1,11 +1,15 @@
 import { fetchRows, formatRelative } from "@/lib/data";
 import { DemoBanner, PageHeader, Kpi, SectionTitle } from "@/components/ui";
 import { selectTestimonials, type ReviewLike } from "@/lib/growth";
+import CopyDraft from '@/components/CopyDraft';
+import { reviewRequest } from '@/lib/operator-productivity';
 
 export const dynamic = "force-dynamic";
 
 export default async function ReviewsPage() {
   const { rows, demoMode } = await fetchRows("reviews", { order: "created_at" });
+  const orders = await fetchRows('orders', { order: 'created_at' });
+  const eligible = orders.rows.filter(order => reviewRequest(order));
 
   const total = rows.length;
   const avg = total ? (rows.reduce((s, r) => s + (Number(r.rating) || 0), 0) / total) : 0;
@@ -22,6 +26,17 @@ export default async function ReviewsPage() {
         subtitle="After-sale feedback &amp; the repeat-purchase loop. Only share with explicit permission — never lift a review without consent."
       />
       <DemoBanner demoMode={demoMode} />
+      <section className="card mb-4">
+        <SectionTitle>Collect feedback after delivery</SectionTitle>
+        <p className="mb-3 text-sm">Review the order, confirm no request was already sent, then copy a draft for manual sending. Requests are not sent or tracked automatically. Public sharing requires separate consent.</p>
+        {orders.error && <p role="alert">Could not load delivered orders.</p>}
+        {eligible.length === 0 && <p>No delivered orders available for a review request.</p>}
+        {eligible.map(order => <div key={String(order.id)} className="mb-3 border-b pb-3">
+          <a href={`/orders/${encodeURIComponent(String(order.id))}`} className="font-semibold underline">Order {String(order.order_number ?? order.id)}</a>
+          <p className="my-2 text-sm">{reviewRequest(order)}</p>
+          <CopyDraft text={reviewRequest(order)!} />
+        </div>)}
+      </section>
 
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="Avg rating" value={avg.toFixed(2)} hint={`${total} reviews`} />
