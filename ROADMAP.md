@@ -15,16 +15,24 @@ quick replies and Instagram saved replies for manual review/copy; `/orders`
 exports the filtered and sorted displayed dataset (up to the existing 100-row query limit)
 as spreadsheet-safe UTF-8 CSV; `/reviews` offers neutral review-request drafts
 for delivered orders. Copying does not send or track a message. Draft wording
-is starter copy, not owner-approved policy. Review capture/persistence and
-request deduplication remain in the second half; public-sharing consent is
-never inferred from a response. Existing VAT export remains available.
+is starter copy, not owner-approved policy. Existing VAT export remains available.
+
+W3 second half implemented (2026-11-03): `/reviews` records that a request
+was sent (one per order, enforced by a unique index on `review_requests`) and
+captures the customer's review (one per order) through `POST /api/reviews/requests`
+and `POST /api/reviews`, owner/operator only. Public-sharing consent is recorded
+only from an explicit customer "yes" and is never inferred from a response.
+`/suppliers` applies a single bulk-purchase gate (`supplierBulkGate`): real video
+received, sample approved, material proof present and risk score below 0.7.
+Order 360 (`/orders/[id]`) already provides the order-timeline detail view.
+Still open: create/edit forms on record pages and media persistence.
 
 - WhatsApp Business quick-reply library.
 - Instagram saved-reply library.
 - CSV export.
-- Review collection flow.
-- Supplier database workflows (sample/video gating).
-- Create/edit forms on all record pages + order-timeline detail view.
+- Review collection flow (done: request log, capture, dedup).
+- Supplier database workflows (done: sample/video/proof/risk gate; supplier edit forms still open).
+- Create/edit forms on all record pages (order-timeline detail view done via Order 360).
 - Persist uploads to Supabase Storage + `media_assets` classification.
 
 ## Phase 3 — Integrations (only if credentials & approvals are provided)
