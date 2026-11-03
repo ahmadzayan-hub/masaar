@@ -1,15 +1,21 @@
 import { fetchRows, formatRelative } from "@/lib/data";
 import { DemoBanner, PageHeader, Kpi, SectionTitle } from "@/components/ui";
 import { selectTestimonials, type ReviewLike } from "@/lib/growth";
-import CopyDraft from '@/components/CopyDraft';
-import { reviewRequest } from '@/lib/operator-productivity';
+import ReviewTools from '@/components/ReviewTools';
+import { reviewRequest, reviewRequestState } from '@/lib/operator-productivity';
 
 export const dynamic = "force-dynamic";
 
 export default async function ReviewsPage() {
   const { rows, demoMode } = await fetchRows("reviews", { order: "created_at" });
   const orders = await fetchRows('orders', { order: 'created_at' });
-  const eligible = orders.rows.filter(order => reviewRequest(order));
+  const requests = await fetchRows('review_requests', { order: 'requested_at' });
+  // Delivered orders only; each carries its request/review state so a second
+  // request for the same order is never drafted.
+  const delivered = orders.rows
+    .filter(order => reviewRequest(order))
+    .map(order => ({ order, state: reviewRequestState(order, requests.rows, rows) }));
+  const eligible = delivered.filter(d => d.state.eligible);
 
   const total = rows.length;
   const avg = total ? (rows.reduce((s, r) => s + (Number(r.rating) || 0), 0) / total) : 0;
@@ -28,13 +34,16 @@ export default async function ReviewsPage() {
       <DemoBanner demoMode={demoMode} />
       <section className="card mb-4">
         <SectionTitle>Collect feedback after delivery</SectionTitle>
-        <p className="mb-3 text-sm">Review the order, confirm no request was already sent, then copy a draft for manual sending. Requests are not sent or tracked automatically. Public sharing requires separate consent.</p>
+        <p className="mb-3 text-sm">Copy a draft, send it manually from the business account, then mark it as sent so nobody asks twice. Nothing is sent from here. Once the customer answers, capture the review; public sharing requires their separate, explicit yes.</p>
         {orders.error && <p role="alert">Could not load delivered orders.</p>}
-        {eligible.length === 0 && <p>No delivered orders available for a review request.</p>}
-        {eligible.map(order => <div key={String(order.id)} className="mb-3 border-b pb-3">
+        {requests.error && <p role="alert">Could not load recorded review requests; requests are hidden until they load.</p>}
+        {delivered.length === 0 && <p>No delivered orders yet.</p>}
+        {delivered.length > 0 && eligible.length === 0 && <p className="muted mb-3">Every delivered order already has a request or a review.</p>}
+        {delivered.map(({ order, state }) => <div key={String(order.id)} className="mb-3 border-b pb-3">
           <a href={`/orders/${encodeURIComponent(String(order.id))}`} className="font-semibold underline">Order {String(order.order_number ?? order.id)}</a>
-          <p className="my-2 text-sm">{reviewRequest(order)}</p>
-          <CopyDraft text={reviewRequest(order)!} />
+          <div className="mt-2">
+            <ReviewTools orderId={String(order.id)} draft={reviewRequest(order)!} state={state} demoMode={demoMode} />
+          </div>
         </div>)}
       </section>
 
