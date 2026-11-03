@@ -27,13 +27,21 @@ received, sample approved, material proof present and risk score below 0.7.
 Order 360 (`/orders/[id]`) already provides the order-timeline detail view.
 Still open: create/edit forms on record pages and media persistence.
 
+Phase 2 close-out (2026-11-03): `/suppliers`, `/couriers` and `/customers` offer
+create and edit forms backed by `POST`/`PATCH /api/records/[table]` (allow-listed
+tables and columns, zod-validated, owner/operator only, demo mode validates and
+persists nothing). `/media` uploads to the private `media` Storage bucket under a
+classification-prefixed path and records a `media_assets` row (`POST /api/media`,
+migration 0011). Every upload carries an explicit classification; a customer's
+private order photo is always flagged as private data. No public URLs are stored.
+
 - WhatsApp Business quick-reply library.
 - Instagram saved-reply library.
 - CSV export.
 - Review collection flow (done: request log, capture, dedup).
-- Supplier database workflows (done: sample/video/proof/risk gate; supplier edit forms still open).
-- Create/edit forms on all record pages (order-timeline detail view done via Order 360).
-- Persist uploads to Supabase Storage + `media_assets` classification.
+- Supplier database workflows (done: sample/video/proof/risk gate and edit forms).
+- Create/edit forms on all record pages (done for suppliers, couriers, customers; Order 360 covers the timeline view).
+- Persist uploads to Supabase Storage + `media_assets` classification (done: `/media`, migration 0011).
 
 ## Phase 3 — Integrations (only if credentials & approvals are provided)
 - Meta Business integration.
