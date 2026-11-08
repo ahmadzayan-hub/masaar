@@ -2,6 +2,7 @@ import { fetchRows, formatAed } from "@/lib/data";
 import { DemoBanner, PageHeader, Kpi, SectionTitle } from "@/components/ui";
 import clsx from "clsx";
 import { supplierBulkGate } from "@/lib/suppliers";
+import RecordForm, { RecordEditor } from "@/components/RecordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,13 @@ export default async function SuppliersPage() {
         <Kpi label="Avg unit cost" value={formatAed(avgUnit)} />
       </div>
 
+      <div className="card mb-4">
+        <SectionTitle>Add supplier</SectionTitle>
+        <RecordEditor title="New supplier record">
+          <RecordForm table="suppliers" demoMode={demoMode} />
+        </RecordEditor>
+      </div>
+
       <div className="card">
         <SectionTitle>Roster &amp; risk</SectionTitle>
         <div className="grid gap-3 md:grid-cols-2">
@@ -63,6 +71,11 @@ export default async function SuppliersPage() {
                   <Cell label="Material proof" v={s.material_proof as string} highlight={(s.material_proof as string) === "missing"} />
                 </div>
                 {s.notes ? <p className="mt-2 text-xs italic text-gray-500">{s.notes as string}</p> : null}
+                <div className="mt-2">
+                  <RecordEditor title="Edit supplier">
+                    <RecordForm table="suppliers" row={s} demoMode={demoMode} />
+                  </RecordEditor>
+                </div>
               </div>
             );
           })}
