@@ -8,3 +8,7 @@ out
 .vercel
 coverage
 *.tsbuildinfo
+
+# Disposable database regression artifacts
+test-results/
+__pycache__/

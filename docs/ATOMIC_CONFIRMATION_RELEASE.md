@@ -2,6 +2,21 @@
 
 This is code-ready test evidence, NOT a production release or operational acceptance.
 
+## Native regression runner (2026-11-10)
+
+The historical single-user evidence below is now supplemented by
+[`tests/sql/run_postgres.py`](../tests/sql/README.md). The same existing SQL
+assertions passed locally on PostgreSQL 17.11 with migrations 0001-0009, plus
+five independent-session cases observing actual database lock waits: duplicate
+form replay, retry after rollback, duplicate confirmation, conflicting payload
+and competing confirmation actions. A real server stop/start passed both receipt
+recovery fixtures. The new PostgreSQL CI job runs this command on PostgreSQL 16.
+
+This closes the local multi-session evidence gap for these five cases only.
+Hosted Auth/PostgREST/RLS, migrations 0010-0011, provider delivery, operational
+backup/restore and deployment acceptance remain outside the synthetic fixture.
+No production schema or customer records were used.
+
 ## Changed behavior
 
 Migration `0008_atomic_confirmation_reply.sql` wraps the existing `0007` bridge in one database transaction: sender/confirmation validation, intake transition, core order, confirmation state and an event-to-token receipt. A promotion error rolls everything back. A committed receipt lets a free-text retry find its original confirmation after a process restart. Replays cannot change token/action; the caller must be service_role and the sender must match the stored phone. A unique event id and confirmation row lock prevent a duplicate order. Unauthenticated/ordinary authenticated callers cannot execute the function or read the receipt table.

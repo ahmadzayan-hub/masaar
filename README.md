@@ -85,6 +85,11 @@ In the Supabase SQL editor or CLI, run the migrations in `supabase/migrations/` 
 | `npm run typecheck` | TypeScript check (`tsc --noEmit`) |
 | `npm test` | Vitest suite (79 tests) |
 
+Atomic confirmation database checks run separately with
+`python tests/sql/run_postgres.py` and in the PostgreSQL regression CI job.
+See [the SQL test guide](tests/sql/README.md) for prerequisites, isolation,
+concurrent replay coverage and server restart checks.
+
 ## Project structure
 
 ```

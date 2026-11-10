@@ -1,0 +1,41 @@
+name: Atomic confirmation PostgreSQL regression
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: postgres-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: Atomic intake, concurrent replay and restart
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install isolated PostgreSQL prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-16 python3
+          echo /usr/lib/postgresql/16/bin >> "$GITHUB_PATH"
+      - name: Run synthetic SQL, concurrency and server restart checks
+        shell: bash
+        run: |
+          mkdir -p test-results
+          python3 tests/sql/run_postgres.py 2>&1 | tee test-results/postgres-regression.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postgres-regression
+          path: test-results/*.log
+          if-no-files-found: ignore
+          retention-days: 7
