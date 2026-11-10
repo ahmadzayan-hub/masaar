@@ -63,15 +63,21 @@ def main():
         start()
         started = True
         sql_file("tests/sql/supabase_stub.sql")
-        # The atomic confirmation contract ends at 0009. Later review/media
-        # migrations and the real Supabase platform are outside this fixture.
-        for number in range(1, 10):
+        sql_file("tests/sql/storage_stub.sql")
+        # Apply the production schema, including the review/media policies.
+        for number in range(1, 13):
             matches = list((root / "supabase/migrations").glob(f"{number:04d}_*.sql"))
             if len(matches) != 1:
                 raise RuntimeError(f"Expected exactly one migration {number:04d}")
+            if number == 12:
+                sql_file("tests/sql/media_privacy_upgrade_setup.sql")
             sql_file(matches[0])
+        # Reapply the privacy repair to verify idempotence and preservation of
+        # historical records accepted by the old constraint.
+        sql_file("supabase/migrations/0012_media_privacy_null_guard.sql")
+        sql_file("tests/sql/media_privacy_upgrade_verify.sql")
         for name in ("intake_bridge", "atomic_confirmation", "confirmation_permissions",
-                     "form_intake_idempotency", "confirmation_search_path"):
+                     "form_intake_idempotency", "confirmation_search_path", "review_media"):
             sql_file(f"tests/sql/{name}.sql")
         verify_concurrent_replays(binaries["psql"], env)
         sql_file("tests/sql/confirmation_restart_setup.sql")
@@ -80,7 +86,7 @@ def main():
         start()
         started = True
         sql_file("tests/sql/confirmation_restart_verify.sql")
-        print("All native PostgreSQL atomic-confirmation regression tests passed.", flush=True)
+        print("All native PostgreSQL confirmation, review and media regression tests passed.", flush=True)
     finally:
         if started:
             run("pg_ctl", "-D", data, "-m", "immediate", "-w", "stop")

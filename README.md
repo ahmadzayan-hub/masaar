@@ -85,10 +85,12 @@ In the Supabase SQL editor or CLI, run the migrations in `supabase/migrations/` 
 | `npm run typecheck` | TypeScript check (`tsc --noEmit`) |
 | `npm test` | Vitest suite (79 tests) |
 
-Atomic confirmation database checks run separately with
+Confirmation, review and media database checks run separately with
 `python tests/sql/run_postgres.py` and in the PostgreSQL regression CI job.
 See [the SQL test guide](tests/sql/README.md) for prerequisites, isolation,
 concurrent replay coverage and server restart checks.
+Migration 0012 repairs legacy NULL privacy flags on customer-private photos and
+requires true for future inserts/updates. It has not been applied to a live database.
 
 ## Project structure
 
