@@ -2,6 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { createClient as sdkClient } from "@supabase/supabase-js";
 
+// Node 20 CI runners have no native WebSocket; the realtime-js client probes
+// for one at construction time even though this suite never opens a channel.
+if (typeof globalThis.WebSocket === "undefined") {
+  (globalThis as { WebSocket?: unknown }).WebSocket = class {} as unknown;
+}
+
 const boundary = vi.hoisted(() => ({ session: vi.fn(), admin: vi.fn(), role: vi.fn(), configured: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: boundary.session, hasSupabaseEnv: boundary.configured }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: boundary.admin }));
