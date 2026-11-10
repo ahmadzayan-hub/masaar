@@ -56,6 +56,10 @@ def main():
     try:
         run("initdb", "-D", data, "-U", "masaar_test", "--no-locale", "--encoding=UTF8",
             "--auth-local=trust", "--auth-host=scram-sha-256", f"--pwfile={password_file}")
+        # All clients use the private TCP port. Linux distributions otherwise
+        # default to a system socket directory the ordinary runner cannot write.
+        with (data / "postgresql.conf").open("a", encoding="utf8") as config:
+            config.write("\nunix_socket_directories = ''\n")
         start()
         started = True
         sql_file("tests/sql/supabase_stub.sql")
