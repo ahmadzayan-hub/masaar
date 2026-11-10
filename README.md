@@ -83,7 +83,7 @@ In the Supabase SQL editor or CLI, run the migrations in `supabase/migrations/` 
 | `npm start` | Serve the production build |
 | `npm run lint` | ESLint (`next lint`) |
 | `npm run typecheck` | TypeScript check (`tsc --noEmit`) |
-| `npm test` | Vitest suite (79 tests) |
+| `npm test` | Vitest unit and API/SDK contract suites |
 
 Confirmation, review and media database checks run separately with
 `python tests/sql/run_postgres.py` and in the PostgreSQL regression CI job.
@@ -91,6 +91,11 @@ See [the SQL test guide](tests/sql/README.md) for prerequisites, isolation,
 concurrent replay coverage and server restart checks.
 Migration 0012 repairs legacy NULL privacy flags on customer-private photos and
 requires true for future inserts/updates. It has not been applied to a live database.
+
+Live media uploads require the existing server-only `SUPABASE_SERVICE_ROLE_KEY`
+for compensation after rejected metadata writes. Uploads and metadata still use
+the caller's session and RLS. Uncertain writes or failed cleanup return a recovery
+reference; see [the media recovery guide](docs/MEDIA_UPLOAD_RECOVERY.md).
 
 ## Project structure
 
