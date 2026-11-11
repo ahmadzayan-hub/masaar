@@ -50,7 +50,7 @@ export default function MediaUpload({ demoMode }: { demoMode: boolean }) {
         startTransition(() => router.refresh());
       }
     } catch {
-      setMsg({ kind: "error", text: "Network error. Nothing was uploaded." });
+      setMsg({ kind: "error", text: "The upload response was lost. Check the media list with an owner before retrying." });
     } finally {
       setBusy(false);
     }

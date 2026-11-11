@@ -35,6 +35,15 @@ classification-prefixed path and records a `media_assets` row (`POST /api/media`
 migration 0011). Every upload carries an explicit classification; a customer's
 private order photo is always flagged as private data. No public URLs are stored.
 
+Media reliability follow-up (2026-11-11): the upload route requires the existing
+server-only service-role configuration before a live upload. Files and metadata
+are still written through the caller's session and RLS. Definite metadata
+rejections trigger privileged removal of only that request's generated object
+path; cleanup must acknowledge that exact path. Uncertain writes and failed
+cleanup return a recovery reference without deleting potentially committed data.
+See [media recovery](docs/MEDIA_UPLOAD_RECOVERY.md) for the manual recovery
+procedure and the limits of the synthetic SDK/HTTP and native PostgreSQL tests.
+
 - WhatsApp Business quick-reply library.
 - Instagram saved-reply library.
 - CSV export.

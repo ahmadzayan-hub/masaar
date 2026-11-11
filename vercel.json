@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "git": { "deploymentEnabled": { "test/atomic-confirmation-postgres": false } },
+  "git": { "deploymentEnabled": { "test/atomic-confirmation-postgres": false, "test/review-media-postgres": false } },
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
