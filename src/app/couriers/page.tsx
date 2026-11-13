@@ -1,6 +1,7 @@
 import { fetchRows, formatAed, formatRelative } from "@/lib/data";
 import { DemoBanner, PageHeader, Kpi, CourierStatusPill, SectionTitle } from "@/components/ui";
 import { EMIRATE_BUFFERS, expectedDeliveryWindow } from "@/lib/growth";
+import RecordForm, { RecordEditor } from "@/components/RecordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,13 @@ export default async function CouriersPage() {
         <Kpi label="Failed attempts" value={failures.length} />
       </div>
 
+      <div className="card mb-4">
+        <SectionTitle>Add courier</SectionTitle>
+        <RecordEditor title="New courier record">
+          <RecordForm table="couriers" demoMode={couriersRes.demoMode} />
+        </RecordEditor>
+      </div>
+
       {/* Couriers grid */}
       <div className="card mb-4">
         <SectionTitle>Courier roster</SectionTitle>
@@ -61,6 +69,11 @@ export default async function CouriersPage() {
               <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
                 <span>Default: <strong className="text-gray-900">{formatAed(Number(c.default_cost))}</strong></span>
                 <span>{c.vat_included ? "VAT incl." : "VAT excl."}</span>
+              </div>
+              <div className="mt-2">
+                <RecordEditor title="Edit courier">
+                  <RecordForm table="couriers" row={c} demoMode={couriersRes.demoMode} />
+                </RecordEditor>
               </div>
             </div>
           ))}

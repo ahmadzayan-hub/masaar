@@ -13,6 +13,7 @@ export interface NavBadges {
 }
 
 const NAV: { href: string; label: string; group: string; icon: string; badgeKey?: keyof NavBadges }[] = [
+  { href: "/replies", label: "Reply libraries", group: "Operate", icon: "↗" },
   { href: "/", label: "Dashboard", group: "Operate", icon: "■", badgeKey: "attention" },
   { href: "/intake", label: "New Conversation", group: "Operate", icon: "✎" },
   { href: "/confirmations", label: "WhatsApp Confirmations", group: "Operate", icon: "✓", badgeKey: "confirmations" },
@@ -25,6 +26,7 @@ const NAV: { href: string; label: string; group: string; icon: string; badgeKey?
   { href: "/offers", label: "Offers", group: "Records", icon: "✦" },
   { href: "/suppliers", label: "Suppliers", group: "Records", icon: "⊕" },
   { href: "/reviews", label: "Reviews", group: "Records", icon: "★" },
+  { href: "/media", label: "Media", group: "Records", icon: "▣" },
   { href: "/reports", label: "Reports & Reviews", group: "Insight", icon: "▥" },
   { href: "/settings", label: "Settings", group: "Admin", icon: "⚙" },
   { href: "/prompts", label: "Prompt Management", group: "Admin", icon: "≡" },

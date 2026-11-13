@@ -83,7 +83,19 @@ In the Supabase SQL editor or CLI, run the migrations in `supabase/migrations/` 
 | `npm start` | Serve the production build |
 | `npm run lint` | ESLint (`next lint`) |
 | `npm run typecheck` | TypeScript check (`tsc --noEmit`) |
-| `npm test` | Vitest suite (79 tests) |
+| `npm test` | Vitest unit and API/SDK contract suites |
+
+Confirmation, review and media database checks run separately with
+`python tests/sql/run_postgres.py` and in the PostgreSQL regression CI job.
+See [the SQL test guide](tests/sql/README.md) for prerequisites, isolation,
+concurrent replay coverage and server restart checks.
+Migration 0012 repairs legacy NULL privacy flags on customer-private photos and
+requires true for future inserts/updates. It has not been applied to a live database.
+
+Live media uploads require the existing server-only `SUPABASE_SERVICE_ROLE_KEY`
+for compensation after rejected metadata writes. Uploads and metadata still use
+the caller's session and RLS. Uncertain writes or failed cleanup return a recovery
+reference; see [the media recovery guide](docs/MEDIA_UPLOAD_RECOVERY.md).
 
 ## Project structure
 
@@ -126,7 +138,7 @@ flowchart LR
 
 ### Form intake and WhatsApp confirmation
 
-1. `POST /api/webhook/form-intake` checks the optional `x-webhook-secret`, validates the UAE mobile (normalised to `+9715XXXXXXXX`), emirate and address.
+1. `POST /api/webhook/form-intake` requires `x-webhook-secret` and refuses every intake with HTTP 401 when `WEBHOOK_SECRET` is unset, then validates the UAE mobile (normalised to `+9715XXXXXXXX`), emirate and address.
 2. A valid lead opens an `order_confirmations` record and sends a WhatsApp message with Confirm, Edit and Cancel buttons. An invalid lead gets a correction request (HTTP 422).
 3. `GET /api/webhook/whatsapp` handles the Meta verification handshake. `POST` verifies `X-Hub-Signature-256`, matches the reply (button or free text such as نعم, YES, لا, تعديل) and updates the order. Confirm releases the order to preparation.
 4. Inbound events are de-duplicated by Meta message id. Awaiting confirmations older than `CONFIRMATION_TTL_HOURS` (default 24) expire on read.
@@ -166,8 +178,9 @@ flowchart LR
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client. Setting these also turns on the login gate |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-side privileged writes |
 | `AI_PROVIDER` and the matching key and model (`GROQ_*`, `TOGETHER_*`, `OPENAI_*`, `OPENAI_COMPATIBLE_*`, `ANTHROPIC_*`, `GEMINI_*`) | AI analysis. Defaults to `mock` |
-| `WEBHOOK_SECRET` | Shared secret for the form-intake webhook and automation calls |
-| `WHATSAPP_PROVIDER`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` | WhatsApp send and inbound verification (`meta` or `mock`) |
+| `WEBHOOK_SECRET` | **Required.** Shared secret for the form-intake webhook and automation calls; unset means every intake is refused (401) |
+| `MASAAR_ALLOW_UNSIGNED_WEBHOOKS` | `1` accepts unsigned webhooks for local development only; ignored on a Vercel production deployment |
+| `WHATSAPP_PROVIDER`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` | WhatsApp send and inbound verification (`meta` or `mock`); without `WHATSAPP_APP_SECRET` every inbound POST is refused |
 | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | Email thank-you messages (`resend` or `mock`) |
 | `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SHEETS_SPREADSHEET_ID`, `GOOGLE_SHEETS_TAB` | Google Sheets mirror |
 | `CONFIRMATION_TTL_HOURS`, `CONFIRMATION_MAX_ATTEMPTS` | Confirmation gate lifecycle (defaults 24 and 3) |
@@ -199,4 +212,4 @@ See [`ROADMAP.md`](ROADMAP.md) for planned phases and [`DEVELOPER_NOTES.md`](DEV
 
 ## License and ownership
 
-Owned by Ahmed Zaian for Beyond Style UAE (BEYOND CONNECT GENERAL TRADING L.L.C., Dubai). No license file is included, so no open-source license is granted. All rights reserved.
+Owned by Ahmed Zaian for Beyond Style UAE (BEYOND CONNECT GENERAL TRADING L.L.C., Dubai). See [`LICENSE`](LICENSE): proprietary and all rights reserved, with no open-source licence granted.

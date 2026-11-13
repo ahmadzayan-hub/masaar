@@ -1,6 +1,8 @@
 import { fetchRows, formatAed } from "@/lib/data";
 import { DemoBanner, PageHeader, Kpi, SectionTitle } from "@/components/ui";
 import clsx from "clsx";
+import { supplierBulkGate } from "@/lib/suppliers";
+import RecordForm, { RecordEditor } from "@/components/RecordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +16,9 @@ function riskBadge(score: number) {
 export default async function SuppliersPage() {
   const { rows, demoMode } = await fetchRows("suppliers", { order: "risk_score" });
   const sorted = [...rows].sort((a, b) => (Number(a.risk_score) || 0) - (Number(b.risk_score) || 0));
-  const approved = rows.filter((r) => r.sample_approved && r.real_video_received).length;
-  const holding = rows.filter((r) => !r.sample_approved || !r.real_video_received).length;
+  const gates = rows.map((r) => supplierBulkGate(r));
+  const approved = gates.filter((g) => g.allowed).length;
+  const holding = gates.length - approved;
   const avgUnit = rows.reduce((s, r) => s + (Number(r.unit_cost) || 0), 0) / Math.max(1, rows.length);
 
   return (
@@ -28,9 +31,16 @@ export default async function SuppliersPage() {
 
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="Suppliers" value={rows.length} />
-        <Kpi label="Fully vetted" value={approved} hint="Video + sample approved" />
-        <Kpi label="On hold" value={holding} hint="Missing video or sample" />
+        <Kpi label="Bulk-purchase ready" value={approved} hint="Video, sample, proof and risk all clear" />
+        <Kpi label="On hold" value={holding} hint="At least one gate blocks bulk purchase" />
         <Kpi label="Avg unit cost" value={formatAed(avgUnit)} />
+      </div>
+
+      <div className="card mb-4">
+        <SectionTitle>Add supplier</SectionTitle>
+        <RecordEditor title="New supplier record">
+          <RecordForm table="suppliers" demoMode={demoMode} />
+        </RecordEditor>
       </div>
 
       <div className="card">
@@ -38,12 +48,19 @@ export default async function SuppliersPage() {
         <div className="grid gap-3 md:grid-cols-2">
           {sorted.map((s) => {
             const risk = riskBadge(Number(s.risk_score) || 0);
+            const gate = supplierBulkGate(s);
             return (
               <div key={s.id as string} className="rounded-2xl border border-gray-200 bg-white p-3">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <span className="font-medium">{s.name as string}</span>
-                  <span className={clsx("badge", risk.cls)}>{risk.label}</span>
+                  <span className="flex gap-1">
+                    <span className={clsx("badge", gate.allowed ? "badge-pass" : "badge-fail")}>{gate.allowed ? "bulk OK" : "bulk blocked"}</span>
+                    <span className={clsx("badge", risk.cls)}>{risk.label}</span>
+                  </span>
                 </div>
+                {gate.blockers.length > 0 ? (
+                  <p className="mb-1 text-xs text-red-700">Blocked: {gate.blockers.join(", ")}</p>
+                ) : null}
                 <div className="text-xs text-gray-500">{(s.country as string)} · {(s.platform as string)} · MOQ {s.moq as number}</div>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <Cell label="Unit cost" v={formatAed(Number(s.unit_cost))} />
@@ -54,6 +71,11 @@ export default async function SuppliersPage() {
                   <Cell label="Material proof" v={s.material_proof as string} highlight={(s.material_proof as string) === "missing"} />
                 </div>
                 {s.notes ? <p className="mt-2 text-xs italic text-gray-500">{s.notes as string}</p> : null}
+                <div className="mt-2">
+                  <RecordEditor title="Edit supplier">
+                    <RecordForm table="suppliers" row={s} demoMode={demoMode} />
+                  </RecordEditor>
+                </div>
               </div>
             );
           })}

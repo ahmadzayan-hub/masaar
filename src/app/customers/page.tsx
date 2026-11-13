@@ -1,6 +1,7 @@
 import { fetchRows, formatAed, formatRelative } from "@/lib/data";
 import { DemoBanner, PageHeader, Kpi, SectionTitle } from "@/components/ui";
 import clsx from "clsx";
+import RecordForm, { RecordEditor } from "@/components/RecordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,13 @@ export default async function CustomersPage() {
         <Kpi label="Arabic-speaking" value={`${arabicShare}%`} hint="Includes mixed-language" />
       </div>
 
+      <div className="card mb-4">
+        <SectionTitle>Add customer</SectionTitle>
+        <RecordEditor title="New customer record">
+          <RecordForm table="customers" demoMode={customersRes.demoMode} />
+        </RecordEditor>
+      </div>
+
       <div className="card">
         <SectionTitle action={<span className="muted">Total spend across all customers: <strong>{formatAed(totalSpend)}</strong></span>}>
           Customer book
@@ -58,7 +66,7 @@ export default async function CustomersPage() {
             <thead>
               <tr>
                 <th>Name</th><th>Arabic</th><th>Platform</th><th>Lang</th>
-                <th>Segment</th><th>Orders</th><th>Spend (AED)</th><th>Last activity</th>
+                <th>Segment</th><th>Orders</th><th>Spend (AED)</th><th>Last activity</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -80,6 +88,11 @@ export default async function CustomersPage() {
                   <td>{s.orders}</td>
                   <td>{formatAed(s.totalAed)}</td>
                   <td className="text-xs text-gray-500">{s.lastOrderAt ? formatRelative(s.lastOrderAt) : "—"}</td>
+                  <td className="min-w-[16rem]">
+                    <RecordEditor title="Edit">
+                      <RecordForm table="customers" row={c} demoMode={customersRes.demoMode} />
+                    </RecordEditor>
+                  </td>
                 </tr>
                 );
               })}
