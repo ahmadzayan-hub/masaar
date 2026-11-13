@@ -140,7 +140,7 @@ flowchart LR
 
 1. `POST /api/webhook/form-intake` requires `x-webhook-secret` and refuses every intake with HTTP 401 when `WEBHOOK_SECRET` is unset, then validates the UAE mobile (normalised to `+9715XXXXXXXX`), emirate and address.
 2. A valid lead opens an `order_confirmations` record and sends a WhatsApp message with Confirm, Edit and Cancel buttons. An invalid lead gets a correction request (HTTP 422).
-3. `GET /api/webhook/whatsapp` handles the Meta verification handshake. `POST` verifies `X-Hub-Signature-256`, matches the reply (button or free text such as ┘å╪╣┘à, YES, ┘ä╪º, ╪¬╪╣╪»┘è┘ä) and updates the order. Confirm releases the order to preparation.
+3. `GET /api/webhook/whatsapp` handles the Meta verification handshake. `POST` verifies `X-Hub-Signature-256`, matches the reply (button or free text such as نعم, YES, لا, تعديل) and updates the order. Confirm releases the order to preparation.
 4. Inbound events are de-duplicated by Meta message id. Awaiting confirmations older than `CONFIRMATION_TTL_HOURS` (default 24) expire on read.
 
 `scripts/google-form-apps-script.gs` posts each form submission to the webhook.
@@ -156,7 +156,7 @@ flowchart LR
 | Delivery | Blocks same-day outside Dubai without courier confirmation |
 | Payment | No courier dispatch until payment is confirmed |
 | VAT | Flags a missing VAT line when applicable |
-| Arabic name | Never blind-transliterates; falls back to ╪ú╪│╪¬╪º╪░╪⌐ or ╪ú╪│╪¬╪º╪░ |
+| Arabic name | Never blind-transliterates; falls back to أستاذة or أستاذ |
 
 ## Deploy on Vercel
 
@@ -198,15 +198,15 @@ The `landing/` folder is a separate static site and can be deployed as its own V
 
 See [`ROADMAP.md`](ROADMAP.md) for planned phases and [`DEVELOPER_NOTES.md`](DEVELOPER_NOTES.md) for design decisions.
 
-## ╪º┘ä┘à┘ä╪«╪╡ ╪º┘ä╪╣╪▒╪¿┘è
+## الملخص العربي
 
 <div dir="rtl" lang="ar">
 
-**┘à╪│╪º╪▒** ┘ç┘ê ┘ä┘ê╪¡╪⌐ ╪º┘ä╪¬╪¡┘â┘à ┘ü┘è ╪º┘ä╪╖┘ä╪¿╪º╪¬ ┘ä┘à╪¬╪¼╪▒ **Beyond Style UAE** ╪º┘ä╪¬╪º╪¿╪╣ ┘ä╪┤╪▒┘â╪⌐ ╪¿┘è┘ê┘å╪» ┘â┘ê┘å┘â╪¬ ┘ä┘ä╪¬╪¼╪º╪▒╪⌐ ╪º┘ä╪╣╪º┘à╪⌐ ╪░.┘à.┘à. ┘ê┘ç┘ê ┘ä┘è╪│ ╪▒┘ê╪¿┘ê╪¬ ╪▒╪» ╪ó┘ä┘è╪î ╪¿┘ä ╪¿╪▒╪¼ ┘à╪▒╪º┘é╪¿╪⌐ ┘ä┘ä╪¬╪¼╪º╪▒╪⌐ ╪╣╪¿╪▒ ┘ê╪│╪º╪ª┘ä ╪º┘ä╪¬┘ê╪º╪╡┘ä ╪º┘ä╪º╪¼╪¬┘à╪º╪╣┘è ┘ü┘è ╪»┘ê┘ä╪⌐ ╪º┘ä╪Ñ┘à╪º╪▒╪º╪¬: ┘è┘é╪¬╪▒╪¡ ╪º┘ä┘ê┘â┘è┘ä ╪º┘ä╪░┘â┘è ╪╡┘è╪º╪║╪⌐ ╪º┘ä╪▒╪»┘ê╪» ┘ê╪Ñ╪¼╪▒╪º╪í╪º╪¬ ╪º┘ä╪╖┘ä╪¿╪î ┘ê┘è╪╣╪¬┘à╪»┘ç╪º ╪º┘ä┘à╪º┘ä┘â╪î ┘ê┘è╪¬╪¬╪¿╪╣ ╪º┘ä┘å╪╕╪º┘à ┘â┘ä ╪╖┘ä╪¿ ┘à┘å ╪ú┘ê┘ä ╪▒╪│╪º┘ä╪⌐ ╪¡╪¬┘ë ╪«╪»┘à╪⌐ ┘à╪º ╪¿╪╣╪» ╪º┘ä╪¿┘è╪╣.
+**مسار** هو لوحة التحكم في الطلبات لمتجر **Beyond Style UAE** التابع لشركة بيوند كونكت للتجارة العامة ذ.م.م. وهو ليس روبوت رد آلي، بل برج مراقبة للتجارة عبر وسائل التواصل الاجتماعي في دولة الإمارات: يقترح الوكيل الذكي صياغة الردود وإجراءات الطلب، ويعتمدها المالك، ويتتبع النظام كل طلب من أول رسالة حتى خدمة ما بعد البيع.
 
-╪¬┘à╪▒ ┘â┘ä ┘à╪│┘ê╪»╪⌐ ╪▒╪» ╪╣┘ä┘ë ┘à╪¡╪▒┘â ╪╢┘ê╪º╪¿╪╖ ╪½╪º╪¿╪¬ ┘è┘à┘å╪╣ ╪º┘ä╪º╪»╪╣╪º╪í╪º╪¬ ╪║┘è╪▒ ╪º┘ä┘à┘ê╪½┘é╪⌐ ╪╣┘å ╪º┘ä┘à┘ê╪º╪»╪î ┘ê╪¬╪│╪▒┘è╪¿ ╪º┘ä╪¿┘è╪º┘å╪º╪¬ ╪º┘ä╪┤╪«╪╡┘è╪⌐╪î ┘ê╪º┘ä┘ê╪╣┘ê╪» ╪║┘è╪▒ ╪º┘ä┘à╪ñ┘â╪»╪⌐ ╪¿╪º┘ä╪│╪╣╪▒ ╪ú┘ê ╪º┘ä╪¬┘ê┘ü╪▒ ╪ú┘ê ╪º┘ä╪¬┘ê╪╡┘è┘ä╪î ┘ê╪┤╪¡┘å ╪º┘ä╪╖┘ä╪¿ ┘é╪¿┘ä ╪¬╪ú┘â┘è╪» ╪º┘ä╪»┘ü╪╣. ┘â┘à╪º ┘è╪¬╪╢┘à┘å ╪º┘ä┘å╪╕╪º┘à ╪¿┘ê╪º╪¿╪⌐ ╪¬╪ú┘â┘è╪» ╪╣╪¿╪▒ ┘ê╪º╪¬╪│╪º╪¿ ╪¬┘Å╪¿┘é┘è ╪º┘ä╪╖┘ä╪¿ ┘à╪╣┘ä┘é╪º┘ï ╪¡╪¬┘ë ┘è╪ñ┘â╪»┘ç ╪º┘ä╪╣┘à┘è┘ä.
+تمر كل مسودة رد على محرك ضوابط ثابت يمنع الادعاءات غير الموثقة عن المواد، وتسريب البيانات الشخصية، والوعود غير المؤكدة بالسعر أو التوفر أو التوصيل، وشحن الطلب قبل تأكيد الدفع. كما يتضمن النظام بوابة تأكيد عبر واتساب تُبقي الطلب معلقاً حتى يؤكده العميل.
 
-┘è╪╣┘à┘ä ╪º┘ä╪¬╪╖╪¿┘è┘é ┘à╪¿╪º╪┤╪▒╪⌐ ╪¿┘ê╪╢╪╣ ╪º┘ä╪╣╪▒╪╢ ╪º┘ä╪¬╪¼╪▒┘è╪¿┘è ╪¿╪¿┘è╪º┘å╪º╪¬ ┘å┘à┘ê╪░╪¼┘è╪⌐ ╪╣┘å╪» ╪╣╪»┘à ╪╢╪¿╪╖ Supabase╪î ┘ê┘è┘à┘â┘å ┘å╪┤╪▒┘ç ╪╣┘ä┘ë Vercel ╪»┘ê┘å ╪ú┘è ┘à╪¬╪║┘è╪▒╪º╪¬ ╪¿┘è╪ª╪⌐ ╪Ñ┘ä╪▓╪º┘à┘è╪⌐.
+يعمل التطبيق مباشرة بوضع العرض التجريبي ببيانات نموذجية عند عدم ضبط Supabase، ويمكن نشره على Vercel دون أي متغيرات بيئة إلزامية.
 
 </div>
 
