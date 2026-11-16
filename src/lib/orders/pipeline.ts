@@ -57,3 +57,27 @@ export function filterByStage<T extends Record<string, unknown>>(
   const wanted = normalizeStatus(stage);
   return orders.filter((o) => normalizeStatus(o.order_status as string) === wanted);
 }
+
+export const ATTENTION_QUEUES = [
+  { key: "payment", label: "Check payment", role: "Finance" },
+  { key: "quality", label: "Complete quality check", role: "Workshop" },
+  { key: "dispatch", label: "Arrange dispatch", role: "Operations" },
+] as const;
+
+type QueueKey = (typeof ATTENTION_QUEUES)[number]["key"];
+
+export function orderAttention<T extends Record<string, unknown>>(orders: T[]): Record<QueueKey, T[]> {
+  const queues: Record<QueueKey, T[]> = { payment: [], quality: [], dispatch: [] };
+  for (const order of orders) {
+    if (order.locked_by_dispute) continue;
+    const stage = normalizeStatus(order.order_status as string);
+    if (stage !== "confirmed" && stage !== "qc") continue;
+    if (stage === "confirmed" || order.payment_status !== "confirmed") {
+      queues.payment.push(order);
+      continue;
+    }
+    const qc = order.qc as { passed?: boolean } | null | undefined;
+    queues[qc?.passed === true ? "dispatch" : "quality"].push(order);
+  }
+  return queues;
+}

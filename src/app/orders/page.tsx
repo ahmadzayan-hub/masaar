@@ -2,7 +2,7 @@ import { fetchRows, formatAed, formatRelative } from "@/lib/data";
 import { DemoBanner, PageHeader, PaymentStatusPill, CourierStatusPill, SectionTitle, Kpi } from "@/components/ui";
 import Link from "next/link";
 import { ORDER_STATUSES, STATUS_LABELS, normalizeStatus } from "@/lib/orders/lifecycle";
-import { filterByStage } from "@/lib/orders/pipeline";
+import { ATTENTION_QUEUES, filterByStage, orderAttention } from "@/lib/orders/pipeline";
 import clsx from "clsx";
 import { OrdersTable } from "@/components/orders/OrdersTable";
 
@@ -17,6 +17,7 @@ export default async function OrdersPage({
 }) {
   // Next 15: searchParams arrives as a promise.
   const { rows: allRows, demoMode } = await fetchRows("orders", { order: "created_at" });
+  const attention = orderAttention(allRows);
   const stageParam = (await searchParams)?.stage;
   const activeStage = stageParam ? normalizeStatus(stageParam) : undefined;
   const rows = filterByStage(allRows, activeStage);
@@ -42,9 +43,37 @@ export default async function OrdersPage({
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title="Orders"
-        subtitle="Order lifecycle from draft to delivered. Dispatch is blocked until payment is confirmed and QC is signed off."
       />
       <DemoBanner demoMode={demoMode} />
+
+      <section className="mb-4" aria-labelledby="order-attention-heading">
+        <h2 id="order-attention-heading" className="mb-2 text-base font-semibold">Needs action</h2>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {ATTENTION_QUEUES.map(({ key, label, role }) => {
+            const orders = attention[key];
+            return (
+              <div className="card-tight" key={key}>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold">{label}</h3>
+                  <span className="badge badge-neutral" aria-label={`${orders.length} orders`}>{orders.length}</span>
+                </div>
+                <p className="text-xs text-gray-600">{role}</p>
+                {orders.length > 0 && (
+                  <ul className="mt-1 divide-y divide-gray-100">
+                    {orders.slice(0, 2).map((order) => (
+                      <li key={String(order.id)}>
+                        <Link className="flex min-h-11 items-center text-sm underline" href={`/orders/${String(order.id)}`}>
+                          {String(order.product_summary || order.id)}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Stage filter — mirrors the Mission Control pipeline */}
       <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by stage">
