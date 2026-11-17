@@ -35,7 +35,7 @@ const analysisSchema = z.object({
   next_action: z.string(),
   follow_up_timing: z.string(),
   internal_sales_note: z.string(),
-  order_record_update: z.record(z.unknown()).nullable(),
+  order_record_update: z.record(z.string(), z.unknown()).nullable(),
   confidence_score: z.number().min(0).max(1),
 });
 

@@ -28,38 +28,41 @@ export interface TableSpec {
 
 // Form values arrive as strings (or booleans from a typed client). Empty
 // strings mean "not provided": optional columns are stored as null.
+// zod 4 rejects an absent key unless the schema is optional; z.preprocess
+// accepts it. Non-string, non-null values pass through unchanged so the inner
+// schema still rejects them, exactly as the old union head did.
+const trimmedOrEmpty = (v: unknown) => (typeof v === "string" ? v.trim() : v == null ? "" : v);
 const text = (max = 200) =>
-  z
-    .union([z.string(), z.null(), z.undefined()])
-    .transform((v) => (typeof v === "string" ? v.trim() : ""))
-    .pipe(z.string().max(max))
-    .transform((v) => (v === "" ? null : v));
+  z.preprocess(trimmedOrEmpty, z.string().max(max).transform((v) => (v === "" ? null : v)));
 const requiredText = (max = 200) => z.string().trim().min(1, "required").max(max);
 const optionalNumber = (opts: { min?: number; max?: number; int?: boolean } = {}) =>
-  z
-    .union([z.number(), z.string(), z.null(), z.undefined()])
-    .transform((v) => (v === "" || v == null ? null : v))
-    .pipe(
-      z.union([
-        z.null(),
-        z.coerce
-          .number()
-          .refine((n) => Number.isFinite(n), "must be a number")
-          .refine((n) => opts.min == null || n >= opts.min, `must be at least ${opts.min}`)
-          .refine((n) => opts.max == null || n <= opts.max, `must be at most ${opts.max}`)
-          .refine((n) => !opts.int || Number.isInteger(n), "must be a whole number"),
-      ])
-    );
+  z.preprocess(
+    // Only numbers and strings may be coerced; anything else becomes NaN and
+    // fails the finite-number check, as the old union head did.
+    (v) => (v === "" || v == null ? null : typeof v === "number" || typeof v === "string" ? v : Number.NaN),
+    z.union([
+      z.null(),
+      z.coerce
+        .number()
+        .refine((n) => Number.isFinite(n), "must be a number")
+        .refine((n) => opts.min == null || n >= opts.min, `must be at least ${opts.min}`)
+        .refine((n) => opts.max == null || n <= opts.max, `must be at most ${opts.max}`)
+        .refine((n) => !opts.int || Number.isInteger(n), "must be a whole number"),
+    ])
+  );
 // Booleans are true only from a literal 'yes' or boolean true. 'true', 'on',
 // '1' and anything else record false, so an unchecked box can never be read
 // as consent or as a passed gate.
-const explicitYes = z.unknown().transform((v) => v === "yes" || v === true);
+// z.preprocess, not z.unknown().transform(), so zod 4 accepts an absent key (false).
+const explicitYes = z.preprocess((v) => v === "yes" || v === true, z.boolean());
 const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
-  z
-    .union([z.string(), z.null(), z.undefined()])
-    .transform((v) => (typeof v === "string" ? v.trim() : ""))
-    .transform((v) => (v === "" ? null : v))
-    .pipe(z.union([z.null(), z.enum(values)]));
+  z.preprocess(
+    (v) => {
+      const t = trimmedOrEmpty(v);
+      return t === "" ? null : t;
+    },
+    z.union([z.null(), z.enum(values)])
+  );
 
 export const CUSTOMER_PLATFORMS = ["instagram", "whatsapp", "tiktok", "meta_ads", "comment", "other"] as const;
 export const CUSTOMER_LANGUAGES = ["ar", "en", "mixed"] as const;

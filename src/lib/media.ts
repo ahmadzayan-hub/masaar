@@ -42,21 +42,25 @@ export const ALLOWED_MEDIA_TYPES: Record<string, string> = {
   "application/pdf": "pdf",
 };
 
-const explicitYes = z.unknown().transform((v) => v === "yes" || v === true);
-const optionalUuid = z
-  .union([z.string(), z.null(), z.undefined()])
-  .transform((v) => (typeof v === "string" ? v.trim() : ""))
-  .transform((v) => (v === "" ? null : v))
-  .pipe(z.union([z.null(), z.string().uuid()]));
+// z.preprocess, not z.unknown().transform(), so zod 4 accepts an absent key (false).
+const explicitYes = z.preprocess((v) => v === "yes" || v === true, z.boolean());
+// z.preprocess (not a union with undefined) so zod 4 accepts an absent key;
+// non-string values pass through and fail the uuid check as before.
+const optionalUuid = z.preprocess(
+  (v) => {
+    const t = typeof v === "string" ? v.trim() : v == null ? "" : v;
+    return t === "" ? null : t;
+  },
+  z.union([z.null(), z.string().uuid()])
+);
 
 export const mediaMetaSchema = z.object({
   photo_classification: z.enum(MEDIA_CLASSIFICATIONS),
   contains_private_data: explicitYes,
-  description: z
-    .union([z.string(), z.null(), z.undefined()])
-    .transform((v) => (typeof v === "string" ? v.trim() : ""))
-    .pipe(z.string().max(500))
-    .transform((v) => (v === "" ? null : v)),
+  description: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim() : v == null ? "" : v),
+    z.string().max(500).transform((v) => (v === "" ? null : v))
+  ),
   conversation_id: optionalUuid,
   order_id: optionalUuid,
 });
