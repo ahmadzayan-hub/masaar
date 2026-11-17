@@ -74,7 +74,8 @@ export type ReviewRequestInput = z.infer<typeof reviewRequestInputSchema>;
 
 // Consent flags accept only the literal 'yes' (or boolean true from a typed
 // client). Any other value, including 'ok', 'sure' or 'true', records false.
-const explicitYes = z.unknown().transform(v => v === 'yes' || v === true);
+// z.preprocess, not z.unknown().transform(), so zod 4 accepts an absent key (false).
+const explicitYes = z.preprocess((v) => v === 'yes' || v === true, z.boolean());
 
 export const reviewCaptureSchema = z.object({
   order_id: z.string().uuid(),

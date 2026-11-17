@@ -18,6 +18,8 @@ export default function LoginPage() {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setMsg(error.message);
+      // Intentional full navigation so the new session cookie reaches the auth proxy.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       else window.location.href = "/";
     } catch {
       setMsg("Supabase is not configured. Use 'Enter as demo owner' to explore.");
